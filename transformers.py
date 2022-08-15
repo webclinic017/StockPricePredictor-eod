@@ -17,7 +17,7 @@ class PullData(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self):
-        """Initialize class with two parameters
+        """
         """
         super().__init__()
         self.ticker = None
