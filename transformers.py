@@ -124,6 +124,17 @@ class PullData(BaseEstimator, TransformerMixin):
 
         # remove nans (EMA)
         final_df_w = final_df_w.fillna(method='bfill')
+        final_df_w = final_df_w.fillna(method='ffill')
+
+        # for row in range(final_df_w.shape[0]):
+        #     if final_df_w.iloc[row, 4] == "":
+        #         final_df_w.iloc[row, 4] = final_df_w.iloc[row, 3]
+        #     if final_df_w.iloc[row, 5] == "":
+        #         final_df_w.iloc[row, 5] = final_df_w.iloc[row, 4]
+        #     if final_df_w.iloc[row, 6] == "":
+        #         final_df_w.iloc[row, 6] = final_df_w.iloc[row, 5]
+        #     if final_df_w.iloc[row, 7] == "":
+        #         final_df_w.iloc[row, 7] = final_df_w.iloc[row, 6]
 
         return final_df_w
 
@@ -237,3 +248,135 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         print("\nDone")
 
         return df_norm, Dates
+
+
+class ReverseNormalization(BaseEstimator, TransformerMixin):
+    """
+    """
+
+    def __init__(self):
+        """
+        """
+        super().__init__()
+        self.forecasts = None
+        self.window_size = None
+        self.labels = None
+        self.debug = None
+        self.x_valid = None
+        self.x_valid_x = None
+
+    def RevertNorm(self, df_final, window_size):
+        ""
+        # Initialize dataitems
+        counter = 0
+        inc = 0
+        Highs = []
+        Lows = []
+        df_rev = pd.DataFrame()
+
+        # Loop through each window separately to normalize
+        for row in range(0, len(df_final), window_size):
+
+            #print("\nCurrent row is: ",row)
+            counter += 1
+            df_temp = pd.DataFrame()
+
+            # Get maxv and minv of window
+            while inc < df_final.shape[1]:
+                # Break for loop in case of excession
+                if row + inc < len(df_final):
+
+                    inc += 1
+                else:
+                    break
+
+            # reset inc
+            inc = 0
+
+            maxv = np.squeeze(df_final.iloc[row, 9:-1].to_numpy())
+            minv = np.squeeze(df_final.iloc[row, 10:].to_numpy())
+
+            if self.debug == True:
+                #########################
+                # Debugging block
+                # print("maxv: ",maxv)
+                # print("minv: ",minv)
+                # break
+                # Print first 2 windows for checking
+                if counter < 3:
+                    # Print data windowing
+                    print("\nWindow:" + str(counter) + "\n " +
+                          str(df_final.iloc[row:row + window_size]))
+                    print("\nMax value is ", maxv)
+                    print("Min value is ", minv)
+                    print(
+                        "\n Reverted:\n " + str((df_final.iloc[row:row + window_size]*(maxv-minv))+minv))
+                ##############################
+
+            # Merge normalized window to new dataframe
+            df_temp = (df_final.iloc[row:row +
+                       window_size, :]*(maxv-minv))+minv
+
+            df_rev = pd.concat([df_rev, df_temp], axis=0)
+
+        # get final df
+        df_rev = df_rev.iloc[:, :9]
+
+        return df_rev
+
+    def fit(self, forecasts: List, labels: List, window_size: int, debug: bool, x_valid: pd.DataFrame, x_valid_x: pd.DataFrame):
+        """
+        """
+
+        self.forecasts = forecasts
+        self.labels = labels
+        self.window_size = window_size
+        self.x_valid = x_valid
+        self.x_valid_x = x_valid_x
+        self.debug = debug
+        return self
+
+    def transform(self):
+        """
+        """
+        # create two columns with labels and predictions
+        y_prediction = []
+        y_labels = []
+        counter = 0
+
+        for item in range(len(self.forecasts)):
+
+            while counter < self.window_size-1:
+                y_prediction.append(np.nan)
+                y_labels.append(np.nan)
+                counter += 1
+
+                if counter == self.window_size-1:
+                    y_prediction.append(self.forecasts[item])
+                    y_labels.append(self.labels[item])
+            counter = 0
+
+        y_labels = np.squeeze(y_labels)
+        dicti = {'labels': y_labels,
+                 'prediction': y_prediction,
+                 'In': [counter2 for counter2 in range(len(y_prediction))]
+                 }
+
+        prediction_df = pd.DataFrame(dicti)
+        prediction_df = prediction_df.set_index('In')
+
+        # add extreme values to be able to revert normalization
+        self.x_valid_x["In"] = np.arange(len(self.x_valid))
+        self.x_valid_x = self.x_valid_x.set_index('In')
+        self.x_valid['In'] = np.arange(len(self.x_valid))
+        self.x_valid = self.x_valid.set_index('In')
+
+        # merge all to one
+        df_valid_norm = pd.concat(
+            [self.x_valid, prediction_df, self.x_valid_x], axis=1)
+
+        # Revert normalization
+        df_rev = self.RevertNorm(df_valid_norm, self.window_size)
+
+        print("Done")
+        return df_rev
