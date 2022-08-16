@@ -1,4 +1,4 @@
-from stringprep import in_table_d2
+import warnings
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -8,8 +8,12 @@ import talib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import warnings
+import tensorflow as tf
+from sklearn.utils import shuffle
 warnings.filterwarnings("ignore")
+
+tf.random.set_seed(7788)
+np.random.seed(7788)
 
 
 class PullData(BaseEstimator, TransformerMixin):
@@ -24,11 +28,9 @@ class PullData(BaseEstimator, TransformerMixin):
         self.start_date = None
         self.end_date = None
         self.interval = None
-
         self.form_window = None
         self.target_window = None
         self.progress = None
-
         self.timeperiod1 = None
         self.timeperiod2 = None
         self.timeperiod3 = None
@@ -124,3 +126,114 @@ class PullData(BaseEstimator, TransformerMixin):
         final_df_w = final_df_w.fillna(method='bfill')
 
         return final_df_w
+
+
+class NormalizeData(BaseEstimator, TransformerMixin):
+    """
+    """
+
+    def __init__(self):
+        """
+        """
+        super().__init__()
+        self.window_size = None
+        self.shuffle = None
+        self.debug = None
+
+    def fit(self, window_size: int, shuffle: bool, debug: bool):
+        """
+        """
+
+        self.window_size = window_size
+        self.shuffle = shuffle
+        self.debug = debug
+        return self
+
+    def transform(self, df):
+        """
+        """
+        # Print stuffs
+        print("Initial length of dataframe: ", df.shape[0])
+        formations = int(df.shape[0]/25)
+        print("Nr of formations: ", formations)
+        ttl = int(formations*25)
+        print("New length of dataframe: ", ttl)
+        len_initial = df.shape[0]
+
+        # Shuffle if True
+        if self.shuffle == True:
+            df_ = df.copy()
+            # 3D reshaping
+            temp = df_.values.reshape(-1, 25, df_.shape[1])
+            # shuffling
+            sh = shuffle(temp)
+            # return back to DF
+            temp_df = sh.reshape(df_.shape[0], df_.shape[1])
+            df = pd.DataFrame(temp_df, columns=df_.columns)
+
+        # Get separated Date and remove it from df
+        if 'Date' in df.columns:
+            Dates = df.iloc[:len_initial, 0]
+            df = df.iloc[:ttl, 1:]
+
+        # Initialize dataitems
+        counter = 0
+        inc = 0
+        Highs = []
+        Lows = []
+        df_norm = pd.DataFrame()
+
+        # Loop through each window separately to normalize
+        for row in range(0, len(df), self.window_size):
+            counter += 1
+            df_temp = pd.DataFrame()
+
+            # Get maxv and minv of window
+            while inc < df.shape[1]:
+                # Get max High
+                if row + inc < len(df):
+
+                    Highs.append(df.iloc[row+inc][1])
+                    Lows.append(df.iloc[row+inc][2])
+
+                    inc += 1
+                else:
+                    break
+
+            # reset inc
+            inc = 0
+
+            # Save Max and Min
+            maxv = max(Highs)
+            minv = min(Lows)
+
+            # testing
+            maxv = np.max(df.iloc[row:row + self.window_size, :].to_numpy())
+            minv = np.min(df.iloc[row:row + self.window_size, :].to_numpy())
+            # print(maxv)
+            # print(minv)
+            # break
+            # Reset
+            Highs = []
+            Lows = []
+
+            # Print first 2 windows for checking
+            if counter < 3 and self.debug == True:
+                # Print data windowing
+                print("\nWindow:" + str(counter) + "\n " +
+                      str(df.iloc[row:row + self.window_size, :]))
+                print("\nMax value is ", maxv)
+                print("Min value is ", minv)
+                print("\n Normalized:\n " +
+                      str((df.iloc[row:row + self.window_size, :]-minv)/(maxv-minv)))
+
+            # Merge normalized window to new dataframe
+            df_temp = (df.iloc[row:row + self.window_size, :]-minv)/(maxv-minv)
+            df_temp['maxv'] = maxv
+            df_temp['minv'] = minv
+
+            df_norm = pd.concat([df_norm, df_temp], axis=0)
+
+        print("\nDone")
+
+        return df_norm, Dates
