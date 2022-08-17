@@ -35,8 +35,9 @@ class PullData(BaseEstimator, TransformerMixin):
         self.timeperiod1 = None
         self.timeperiod2 = None
         self.timeperiod3 = None
+        self.export_excel = None
 
-    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int, target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int):
+    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int, target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool):
         # Data pulling
         self.ticker = ticker
         self.start_date = start_date
@@ -54,6 +55,7 @@ class PullData(BaseEstimator, TransformerMixin):
         self.timeperiod2 = timeperiod2
         self.timeperiod3 = timeperiod3
 
+        self.export_excel = export_excel
         return self
 
     def transform(self):
@@ -163,6 +165,10 @@ class PullData(BaseEstimator, TransformerMixin):
                     final_df = pd.concat([final_df, temp_df], axis=0)
 
         final_df_w = final_df.copy()
+
+        if self.export_excel == True:
+            final_df_w.to_excel(f'{self.ticker}_stock_intial.xlsx')
+
         return final_df_w
 
 
@@ -374,6 +380,8 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         y_prediction = []
         y_labels = []
         counter = 0
+        #x_valid_new = pd.DataFrame()
+        x_valid_ = self.x_valid
 
         for item in range(len(self.forecasts)):
 
@@ -399,12 +407,12 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         # add extreme values to be able to revert normalization
         self.x_valid_x["In"] = np.arange(len(self.x_valid))
         self.x_valid_x = self.x_valid_x.set_index('In')
-        self.x_valid['In'] = np.arange(len(self.x_valid))
-        self.x_valid = self.x_valid.set_index('In')
+        x_valid_['In'] = np.arange(len(self.x_valid))
+        x_valid_ = x_valid_.set_index('In')
 
         # merge all to one
         df_valid_norm = pd.concat(
-            [self.x_valid, prediction_df, self.x_valid_x], axis=1)
+            [x_valid_, prediction_df, self.x_valid_x], axis=1)
 
         # Revert normalization
         df_rev = self.RevertNorm(df_valid_norm, self.window_size)
