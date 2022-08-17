@@ -31,17 +31,19 @@ class PullData(BaseEstimator, TransformerMixin):
         self.form_window = None
         self.target_window = None
         self.progress = None
+        self.condition = None
         self.timeperiod1 = None
         self.timeperiod2 = None
         self.timeperiod3 = None
 
-    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, form_window: int, target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int):
+    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int, target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int):
         # Data pulling
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
         self.interval = interval
         self.progress = progress
+        self.condition = condition
 
         # Data processing
         self.form_window = form_window
@@ -126,16 +128,41 @@ class PullData(BaseEstimator, TransformerMixin):
         final_df_w = final_df_w.fillna(method='bfill')
         final_df_w = final_df_w.fillna(method='ffill')
 
-        # for row in range(final_df_w.shape[0]):
-        #     if final_df_w.iloc[row, 4] == "":
-        #         final_df_w.iloc[row, 4] = final_df_w.iloc[row, 3]
-        #     if final_df_w.iloc[row, 5] == "":
-        #         final_df_w.iloc[row, 5] = final_df_w.iloc[row, 4]
-        #     if final_df_w.iloc[row, 6] == "":
-        #         final_df_w.iloc[row, 6] = final_df_w.iloc[row, 5]
-        #     if final_df_w.iloc[row, 7] == "":
-        #         final_df_w.iloc[row, 7] = final_df_w.iloc[row, 6]
+        # # Apply condition
+        trades = 0
+        final_df = pd.DataFrame()
 
+        for row in range(24, len(final_df_w)):
+
+            if final_df_w.iloc[row, 0] == "Month":
+
+                if (self.condition == True and final_df_w.iloc[row-1, 4] < final_df_w.iloc[row-1, 5]):
+                    temp_df = pd.DataFrame()
+
+                    temp_df = final_df_w.iloc[row-24:row+1, :]
+
+                    trades += 1
+
+                    temp_df = final_df_w.iloc[row-24:row+1, :]
+
+                    temp_df['trades'] = int(trades)
+
+                    final_df = pd.concat([final_df, temp_df], axis=0)
+
+                if self.condition == False:
+                    temp_df = pd.DataFrame()
+
+                    temp_df = final_df_w.iloc[row-24:row+1, :]
+
+                    trades += 1
+
+                    temp_df = final_df_w.iloc[row-24:row+1, :]
+
+                    temp_df['trades'] = int(trades)
+
+                    final_df = pd.concat([final_df, temp_df], axis=0)
+
+        final_df_w = final_df.copy()
         return final_df_w
 
 
@@ -186,6 +213,10 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         if 'Date' in df.columns:
             Dates = df.iloc[:len_initial, 0]
             df = df.iloc[:ttl, 1:]
+
+        # Drop trades column from dataset
+        if 'trades' in df.columns:
+            df = df.drop('trades', axis=1)
 
         # Initialize dataitems
         counter = 0
