@@ -261,6 +261,15 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
                     ttl_diff += difference_value
                     ttl_diff_mean = float(ttl_diff / trade_counter)
 
+        # Add trade counter
+        counter = 1
+        trades_df['trade'] = ""
+
+        for row in range(len(trades_df)):
+            trades_df.iloc[row, 11] = counter
+            if trades_df.iloc[row, 8] != "nn":
+                counter += 1
+
         print("Entry Candle: ", self.entry_candle)
         print("\nTotal Trades: ", trade_counter)
         print("Profit Trades: ", profit_trades)
@@ -278,3 +287,76 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
             trades_df.to_excel('total_trades.xlsx')
 
         return trades_df
+
+
+class GetPerformanceReport(BaseEstimator, TransformerMixin):
+    """
+    """
+
+    def __init__(self):
+        """
+        """
+
+        super().__init__()
+        self.entry_candle = None
+        self.budget = None
+        self.window_size = None
+        self.export_excel = None
+
+    def profit_calculation(self, difference, stock_price, budget):
+        qty = round(budget/stock_price, 0)
+
+        return round(difference * qty)
+
+    def fit(self, entry_candle: str, budget: int, window_size: int, export_excel: bool):
+        """
+        """
+
+        self.entry_candle = entry_candle
+        self.budget = budget
+        self.window_size = window_size
+        self.export_excel = export_excel
+        return self
+
+    def transform(self, df: pd.DataFrame):
+        """
+        """
+        performance_report = df.copy()
+
+        try:
+            performance_report = performance_report.reset_index()
+            performance_report = performance_report.drop('In', axis=1)
+        except:
+            pass
+
+        def GetEntryPriceColl(candle):
+            if candle == 'Previous High':
+                EntryPriceColl = 'High'
+                EntryPriceRow = 1
+            if candle == 'Current Open':
+                EntryPriceColl = 'Open'
+                EntryPriceRow = 0
+            if candle == 'Previous Close':
+                EntryPriceRow = 1
+            return EntryPriceColl, EntryPriceRow
+
+        entry_coll, entry_row = GetEntryPriceColl(self.entry_candle)
+
+        for row in range(self.window_size-1, len(performance_report), self.window_size):
+            entry = performance_report.loc[row-entry_row, entry_coll]
+            difference = performance_report.loc[row, 'profit']
+            prediction = performance_report.loc[row, 'prediction']
+            ent_date = performance_report.loc[row-1, 'Datetime']
+
+            # Fill data
+            performance_report.loc[row, 'Entry'] = entry
+            performance_report.loc[row, 'Performance'] = self.profit_calculation(
+                difference, entry, self.budget)
+
+        performance_report = performance_report.fillna("nn")
+
+        if self.export_excel == True:
+            performance_report.to_excel('Performance_report.xlsx')
+
+        print("Done")
+        return performance_report
