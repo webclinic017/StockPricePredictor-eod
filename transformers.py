@@ -36,8 +36,9 @@ class PullData(BaseEstimator, TransformerMixin):
         self.timeperiod2 = None
         self.timeperiod3 = None
         self.export_excel = None
+        self.excel_path = None
 
-    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int, target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool):
+    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int, target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str):
         # Data pulling
         self.ticker = ticker
         self.start_date = start_date
@@ -56,6 +57,7 @@ class PullData(BaseEstimator, TransformerMixin):
         self.timeperiod3 = timeperiod3
 
         self.export_excel = export_excel
+        self.excel_path = excel_path
         return self
 
     def transform(self):
@@ -134,18 +136,18 @@ class PullData(BaseEstimator, TransformerMixin):
         trades = 0
         final_df = pd.DataFrame()
 
-        for row in range(24, len(final_df_w)):
+        for row in range(self.form_window, len(final_df_w)):
 
             if final_df_w.iloc[row, 0] == "Month":
 
                 if (self.condition == True and final_df_w.iloc[row-1, 4] < final_df_w.iloc[row-1, 5]):
                     temp_df = pd.DataFrame()
 
-                    temp_df = final_df_w.iloc[row-24:row+1, :]
+                    temp_df = final_df_w.iloc[row-self.form_window:row+1, :]
 
                     trades += 1
 
-                    temp_df = final_df_w.iloc[row-24:row+1, :]
+                    temp_df = final_df_w.iloc[row-self.form_window:row+1, :]
 
                     temp_df['trades'] = int(trades)
 
@@ -154,11 +156,11 @@ class PullData(BaseEstimator, TransformerMixin):
                 if self.condition == False:
                     temp_df = pd.DataFrame()
 
-                    temp_df = final_df_w.iloc[row-24:row+1, :]
+                    temp_df = final_df_w.iloc[row-self.form_window:row+1, :]
 
                     trades += 1
 
-                    temp_df = final_df_w.iloc[row-24:row+1, :]
+                    temp_df = final_df_w.iloc[row-self.form_window:row+1, :]
 
                     temp_df['trades'] = int(trades)
 
@@ -167,8 +169,9 @@ class PullData(BaseEstimator, TransformerMixin):
         final_df_w = final_df.copy()
 
         if self.export_excel == True:
-            final_df_w.to_excel(f'{self.ticker}_stock_intial.xlsx')
-
+            final_df_w.to_excel(
+                f'{self.excel_path}/{self.ticker}_windowed_dataset.xlsx')
+            stock.to_excel(f'{self.excel_path}/{self.ticker}_raw_dataset.xlsx')
         return final_df_w
 
 
@@ -183,14 +186,17 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         self.window_size = None
         self.shuffle = None
         self.debug = None
-
-    def fit(self, window_size: int, shuffle: bool, debug: bool):
+        self.export_excel = None
+        self.excel_path = None
+    def fit(self, window_size: int, shuffle: bool, debug: bool, export_excel: bool,excel_path:str):
         """
         """
 
         self.window_size = window_size
         self.shuffle = shuffle
         self.debug = debug
+        self.export_excel = export_excel
+        self.excel_path = excel_path
         return self
 
     def transform(self, df):
@@ -198,9 +204,9 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         """
         # Print stuffs
         print("Initial length of dataframe: ", df.shape[0])
-        formations = int(df.shape[0]/25)
+        formations = int(df.shape[0]/self.window_size)
         print("Nr of formations: ", formations)
-        ttl = int(formations*25)
+        ttl = int(formations*self.window_size)
         print("New length of dataframe: ", ttl)
         len_initial = df.shape[0]
 
@@ -208,12 +214,20 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         if self.shuffle == True:
             df_ = df.copy()
             # 3D reshaping
-            temp = df_.values.reshape(-1, 25, df_.shape[1])
+            temp = df_.values.reshape(-1, self.window_size, df_.shape[1])
             # shuffling
             sh = shuffle(temp)
             # return back to DF
             temp_df = sh.reshape(df_.shape[0], df_.shape[1])
             df = pd.DataFrame(temp_df, columns=df_.columns)
+
+            # after reshuffling columns are object type, must be changed to float
+            for coll in df.columns:
+                if df[coll].dtype == 'object' and coll != 'Date' and coll != 'trades':
+                    df[coll] = df[coll].astype('float64')
+
+        if self.export_excel == True:
+            df.to_excel(f'{self.excel_path}/reshufled_dataset.xlsx')
 
         # Get separated Date and remove it from df
         if 'Date' in df.columns:

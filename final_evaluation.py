@@ -5,6 +5,8 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import yfinance as yf
+import talib
 
 
 class GetFinalDataframe(BaseEstimator, TransformerMixin):
@@ -93,28 +95,35 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         self.acceptance = None
         self.penalization = None
         self.entry_candle = None
+        self.window_size = None
         self.budget = None
         self.export_excel = None
+        self.excel_path = None
+        self.excel_path = None
 
     def profit_calculation(self, difference, stock_price, budget):
         qty = round(budget/stock_price, 0)
 
         return round(difference * qty)
 
-    def fit(self, acceptance: int, penalization: int, entry_candle: str, budget: int, export_excel: bool):
+    def fit(self, acceptance: int, penalization: int, entry_candle: str, window_size: int, budget: int, export_excel: bool, excel_path: str):
         """
         """
         self.acceptance = acceptance
         self.penalization = penalization
         self.entry_candle = entry_candle
+        self.window_size = window_size
         self.budget = budget
         self.export_excel = export_excel
+        self.excel_path = excel_path
 
         return self
 
     def transform(self, df: pd.DataFrame):
         """
         """
+        print(f"period: {df.iloc[0,9]} - {df.iloc[df.shape[0]-2,9]}")
+        print("Formations: ", int(df.shape[0]/self.window_size))
 
         # Initialize data items
         df_ = df.copy()
@@ -244,7 +253,8 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
                             #print("Previous High: ",EntryPrice)
                             # print(df_.iloc[candle-3:candle+1,:])
 
-                    temp_df = df_.iloc[candle-24:candle+1, :].copy()
+                    temp_df = df_.iloc[candle -
+                                       (self.window_size-1):candle+1, :].copy()
 
                     # Adjust revised prediction according to penalization
                     if self.penalization != 0:
@@ -284,7 +294,7 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         print("\nNet profit: ", ttl_profit+ttl_loss)
 
         if self.export_excel == True:
-            trades_df.to_excel('total_trades.xlsx')
+            trades_df.to_excel(f'{self.excel_path}/total_trades.xlsx')
 
         return trades_df
 
@@ -302,13 +312,14 @@ class GetPerformanceReport(BaseEstimator, TransformerMixin):
         self.budget = None
         self.window_size = None
         self.export_excel = None
+        self.excel_path = None
 
     def profit_calculation(self, difference, stock_price, budget):
         qty = round(budget/stock_price, 0)
 
         return round(difference * qty)
 
-    def fit(self, entry_candle: str, budget: int, window_size: int, export_excel: bool):
+    def fit(self, entry_candle: str, budget: int, window_size: int, export_excel: bool, excel_path: str):
         """
         """
 
@@ -316,6 +327,7 @@ class GetPerformanceReport(BaseEstimator, TransformerMixin):
         self.budget = budget
         self.window_size = window_size
         self.export_excel = export_excel
+        self.excel_path = excel_path
         return self
 
     def transform(self, df: pd.DataFrame):
@@ -356,7 +368,206 @@ class GetPerformanceReport(BaseEstimator, TransformerMixin):
         performance_report = performance_report.fillna("nn")
 
         if self.export_excel == True:
-            performance_report.to_excel('Performance_report.xlsx')
+            performance_report.to_excel(
+                f'{self.excel_path}/Performance_report.xlsx')
 
         print("Done")
         return performance_report
+
+
+class MakeSinglePrediction(BaseEstimator, TransformerMixin):
+    """
+    """
+
+    def __init__(self):
+        """
+        """
+
+        super().__init__()
+
+        self.model_name = None
+        self.form_window = None
+        self.ticker = None
+        self.start_date = None
+        self.end_date = None
+        self.interval = None
+        self.form_window = None
+        self.progress = None
+        self.condition = None
+        self.timeperiod1 = None
+        self.timeperiod2 = None
+        self.timeperiod3 = None
+        self.debug = None
+        self.acceptance = None
+        self.penalization = None
+        self.budget = None
+        self.entry_candle = None
+
+    # Customized loss function
+    def sign_penalty(y_true, y_pred):
+        penalty = 100.
+        loss = tf.where(tf.less(y_true*y_pred, 0),
+                        penalty * tf.square(y_true-y_pred),
+                        tf.square(y_true - y_pred)
+                        )
+
+        return(tf.reduce_mean(loss, axis=-1))
+
+    # Customized functions
+    def norm_df(self, pred1):
+        df_temp = pd.DataFrame()
+        try:
+            pred1 = pred1.drop('Date', axis=1)
+        except:
+            pass
+
+        pred_np = pred1.to_numpy()
+        maxv = np.max(pred_np)
+        minv = np.min(pred_np)
+        df_temp = (pred1.iloc[:, :]-minv)/(maxv-minv)
+
+        return df_temp, maxv, minv
+
+    def revert_df(self, df, maxv, minv):
+        df_temp = pd.DataFrame()
+        df_temp = (df.iloc[:, :]*(maxv-minv))+minv
+
+        return df_temp
+
+    def revert_prediction(self, value, maxv, minv):
+
+        return (value * (maxv-minv))+minv
+
+    def MakePred(self, series, model):
+        pr = series.to_numpy()
+        series2 = np.array([[pr]])
+        pred = tf.data.Dataset.from_tensor_slices(series2)
+        prediction = model.predict(pred)
+
+        return prediction
+
+    def Profit_calculation(self, budget, entry, prediction):
+        qty = round(budget / entry, 0)
+        return (prediction - entry) * qty
+
+    def fit(self, model_name: str, form_window: int, ticker: str, start_date: str, end_date: str, interval: str,
+            progress: bool, condition: bool, timeperiod1: int, timeperiod2: int, timeperiod3: int, debug: bool, budget: int,
+            penalization: int, acceptance: int, entry_candle: str):
+        """
+        """
+
+        self.model_name = model_name
+
+        self.ticker = ticker
+        self.start_date = start_date
+        self.end_date = end_date
+        self.interval = interval
+        self.form_window = form_window
+
+        self.progress = progress
+        self.condition = condition
+        self.timeperiod1 = timeperiod1
+        self.timeperiod2 = timeperiod2
+        self.timeperiod3 = timeperiod3
+        self.debug = debug
+        self.form_window = form_window
+
+        self.budget = budget
+        self.penalization = penalization
+        self.acceptance = acceptance
+
+        self.entry_candle = entry_candle
+
+        stock = yf.download(self.ticker,
+                            start=self.start_date,
+                            end=self.end_date,
+                            interval=self.interval,
+                            progress=self.progress,
+                            )
+        stock = stock.dropna(axis=0)
+        stock = stock.drop(labels=['Adj Close', 'Volume'], axis=1)
+
+        stock[f'EMA{self.timeperiod1}'] = talib.EMA(
+            stock['Close'], timeperiod=self.timeperiod1)
+        stock[f'EMA{self.timeperiod2}'] = talib.EMA(
+            stock['Close'], timeperiod=self.timeperiod2)
+        stock[f'EMA{self.timeperiod3}'] = talib.EMA(
+            stock['Close'], timeperiod=self.timeperiod3)
+
+        # Reset index
+        stock = stock.reset_index()
+
+        # Get final dataframe
+        trading_formation = stock.tail(self.form_window)
+
+        if self.debug == True:
+            print("Last Close: ", trading_formation.iloc[4, 4])
+            print("Last Open: ", trading_formation.iloc[4, 1])
+            print("Last High: ", trading_formation.iloc[4, 2])
+            print("First open: ", trading_formation.iloc[0, 1])
+            print(f"Last EMA{self.timeperiod2}: ",
+                  trading_formation.iloc[4, 5])
+            print(f"Last EMA{self.timeperiod3}: ",
+                  trading_formation.iloc[4, 6])
+
+        # Apply condition if needed
+        if (self.condition == True):
+            if (self.condition == True):  # add conditions
+                entry = trading_formation.iloc[len(trading_formation)-1, 4]
+                print("\nTrading condition passed, you can make prediction")
+                print("\nEntry price: ", round(entry, 4))
+            else:
+                print("condition NOT passed, do NOT trade")
+
+        return self, trading_formation
+
+    def transform(self, df: pd.DataFrame):
+        """
+        """
+        trading_formation = df.copy()
+        tf.keras.losses.sign_penalty = self.sign_penalty
+        model = tf.keras.models.load_model(self.model_name, custom_objects={
+                                           'sign_penalty': self.sign_penalty})
+
+        EntryPriceRow = 0
+
+        def GetEntryPriceColl(candle):
+            if candle == 'Current High':
+                EntryPriceColl = 2
+                EntryPriceRow = 0
+            if candle == 'Current Open':
+                EntryPriceColl = 1
+                EntryPriceRow = 0
+            if candle == 'Current Close':
+                EntryPriceColl = 4
+                EntryPriceRow = 0
+            return EntryPriceColl, EntryPriceRow
+
+        print()
+        entry_coll, entry_row = GetEntryPriceColl(self.entry_candle)
+
+        def Predict(pred):
+            df_temp1, maxv, minv = self.norm_df(pred)
+            pr = self.MakePred(df_temp1, model)
+            prediction = self.revert_prediction(pr, maxv, minv)
+            prediction = np.squeeze(prediction)
+            return prediction
+
+        entry = trading_formation.iloc[len(trading_formation)-1, entry_coll]
+
+        pred = Predict(trading_formation)
+
+        ppred = round(pred-self.penalization, 5)
+        profit_pen = self.Profit_calculation(self.budget, entry, ppred)
+
+        print(f'\nEntry candle ({self.entry_candle})')
+        if np.max([pred, ppred])-entry > 0:
+            print("\nBudget: ", self.budget)
+            print("\nEntry price: ", round(entry, 2))
+            print("Prediction: ", round(ppred, 2))
+            print("Expected Profit: ", round(profit_pen, 2))
+
+        else:
+            print("\nPrediction is NOT profitable")
+            print("\nEntry price: ", round(entry, 2))
+            print("Max Prediction: ", round(np.max([pred, ppred]), 2))
