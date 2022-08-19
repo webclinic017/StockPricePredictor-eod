@@ -111,7 +111,7 @@ class PullData(BaseEstimator, TransformerMixin):
                 minv = np.min(temp_df2.iloc[:, 1:4].to_numpy())
 
                 if maxv == np.nan:
-                    print(temp_df2.iloc[:, 1:4])
+                    #print(temp_df2.iloc[:, 1:4])
                     break
 
                 openv = temp_df2.iloc[0, 1]
@@ -172,6 +172,8 @@ class PullData(BaseEstimator, TransformerMixin):
             final_df_w.to_excel(
                 f'{self.excel_path}/{self.ticker}_windowed_dataset.xlsx')
             stock.to_excel(f'{self.excel_path}/{self.ticker}_raw_dataset.xlsx')
+
+            print("--------> PullData completed\n")
         return final_df_w
 
 
@@ -188,7 +190,8 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         self.debug = None
         self.export_excel = None
         self.excel_path = None
-    def fit(self, window_size: int, shuffle: bool, debug: bool, export_excel: bool,excel_path:str):
+
+    def fit(self, window_size: int, shuffle: bool, debug: bool, export_excel: bool, excel_path: str):
         """
         """
 
@@ -203,11 +206,9 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         """
         """
         # Print stuffs
-        print("Initial length of dataframe: ", df.shape[0])
+        print("Dataframe shape: ", df.shape)
         formations = int(df.shape[0]/self.window_size)
-        print("Nr of formations: ", formations)
-        ttl = int(formations*self.window_size)
-        print("New length of dataframe: ", ttl)
+        print("Number of formations: ", formations)
         len_initial = df.shape[0]
 
         # Shuffle if True
@@ -232,7 +233,7 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         # Get separated Date and remove it from df
         if 'Date' in df.columns:
             Dates = df.iloc[:len_initial, 0]
-            df = df.iloc[:ttl, 1:]
+            df = df.iloc[:df.shape[0], 1:]
 
         # Drop trades column from dataset
         if 'trades' in df.columns:
@@ -296,7 +297,7 @@ class NormalizeData(BaseEstimator, TransformerMixin):
 
             df_norm = pd.concat([df_norm, df_temp], axis=0)
 
-        print("\nDone")
+        print("--------> NormalizeData completed\n")
 
         return df_norm, Dates
 
@@ -431,5 +432,5 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         # Revert normalization
         df_rev = self.RevertNorm(df_valid_norm, self.window_size)
 
-        print("Done")
+        print("--------> ReverseNormalization completed\n")
         return df_rev

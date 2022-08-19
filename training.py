@@ -43,7 +43,7 @@ class SplitData(BaseEstimator, TransformerMixin):
         xtrain_split = trainsubset * self.window_size
 
         if self.debug == True:
-            print("df:  ", len(df_))
+            print("Dataframe shape:  ", df.shape)
             print("total windows in dataset: ", ttl_windows)
             print("\ntotal windows of {0}% train set: {1} ".format(
                 self.split_ratio*100, trainsubset))
@@ -69,7 +69,7 @@ class SplitData(BaseEstimator, TransformerMixin):
         x_valid = x_valid.iloc[:, :7].copy()
         x_train = x_train.iloc[:, :7].copy()
 
-        print("Done")
+        print("--------> SplitData completed\n")
         return x_train, x_valid, x_train_extremes, x_valid_extremes
 
 
@@ -182,5 +182,5 @@ class GetTensoredDataset(BaseEstimator, TransformerMixin):
                 break
         labels = np.squeeze(labels)
 
-        print("Done")
+        print("--------> GetTensoredDataset completed\n")
         return tensors, labels

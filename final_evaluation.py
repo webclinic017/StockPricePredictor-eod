@@ -371,7 +371,7 @@ class GetPerformanceReport(BaseEstimator, TransformerMixin):
             performance_report.to_excel(
                 f'{self.excel_path}/Performance_report.xlsx')
 
-        print("Done")
+        print("--------> GetPerformanceReport completed\n")
         return performance_report
 
 
