@@ -18,8 +18,9 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.window_size = None
         self.dates = None
         self.debug = None
+        self.export_excel = None
 
-    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool):
+    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool, export_excel: bool):
         """
         """
 
@@ -27,6 +28,7 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.window_size = window_size
         self.dates = dates
         self.debug = debug
+        self.export_excel = export_excel
         return self
 
     def transform(self, df):
@@ -57,9 +59,24 @@ class SplitData(BaseEstimator, TransformerMixin):
         time_valid = self.dates[split:]
         x_valid = df_[split:]
 
+        # Format dates
+        start_date_train = time_train.values[0]
+        start_date_train = start_date_train.strftime('%Y-%m-%d')
+        end_date_train = time_train.values[len(time_train)-2]
+        end_date_train = end_date_train.strftime('%Y-%m-%d')
+        start_date_valid = time_valid.values[0]
+        start_date_valid = start_date_valid.strftime('%Y-%m-%d')
+        end_date_valid = time_valid.values[len(time_valid)-2]
+        end_date_valid = end_date_valid.strftime('%Y-%m-%d')
+
         # Print stuffs
-        print("\nx_train window", len(x_train)/self.window_size)
-        print("x_valid window", len(x_valid)/self.window_size)
+        print(f"\nSplit ratio: {round(self.split_ratio*100)} %")
+        print(
+            f"train period: {start_date_train} - {end_date_train}")
+        print(
+            f"valid period: {start_date_valid} - {end_date_valid}")
+        print("x_train window: ", len(x_train)/self.window_size)
+        print("x_valid window: ", len(x_valid)/self.window_size)
 
         # Save extreme values
         x_train_extremes = x_train.iloc[:, 7:].copy()
@@ -68,6 +85,10 @@ class SplitData(BaseEstimator, TransformerMixin):
         # Remove extreme values
         x_valid = x_valid.iloc[:, :7].copy()
         x_train = x_train.iloc[:, :7].copy()
+
+        if self.export_excel == True:
+            x_valid.to_excel('x_valid_dataset.xlsx')
+            x_train.to_excel('x_train_dataset.xlsx')
 
         print("--------> SplitData completed\n")
         return x_train, x_valid, x_train_extremes, x_valid_extremes

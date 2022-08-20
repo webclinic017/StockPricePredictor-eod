@@ -77,7 +77,7 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
                 start_date = datetime.strptime(start, '%Y-%m-%d').date()
                 merged_df.iloc[row, -1] = start_date + timedelta(days=1)
 
-        print("Done")
+        print("--------> GetFinalDataframe\n")
         return merged_df
 
 

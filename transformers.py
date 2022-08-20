@@ -109,13 +109,14 @@ class PullData(BaseEstimator, TransformerMixin):
 
                 maxv = np.max(temp_df2.iloc[:, 1:4].to_numpy())
                 minv = np.min(temp_df2.iloc[:, 1:4].to_numpy())
-
+                # print(temp_df2)
+                # break
                 if maxv == np.nan:
                     #print(temp_df2.iloc[:, 1:4])
                     break
 
                 openv = temp_df2.iloc[0, 1]
-                closev = temp_df2.iloc[3, 4]
+                closev = temp_df2.iloc[(self.target_window - 1), 4]
 
                 dicti = {'Open': [openv],
                          'High': [maxv],
@@ -227,7 +228,7 @@ class NormalizeData(BaseEstimator, TransformerMixin):
                 if df[coll].dtype == 'object' and coll != 'Date' and coll != 'trades':
                     df[coll] = df[coll].astype('float64')
 
-        if self.export_excel == True:
+        if self.export_excel == True and self.shuffle == True:
             df.to_excel(f'{self.excel_path}/reshufled_dataset.xlsx')
 
         # Get separated Date and remove it from df
@@ -296,6 +297,9 @@ class NormalizeData(BaseEstimator, TransformerMixin):
             df_temp['minv'] = minv
 
             df_norm = pd.concat([df_norm, df_temp], axis=0)
+
+        if self.export_excel == True:
+            df_norm.to_excel(f'{self.excel_path}/normalized_dataset.xlsx')
 
         print("--------> NormalizeData completed\n")
 
