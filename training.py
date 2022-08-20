@@ -19,8 +19,9 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.dates = None
         self.debug = None
         self.export_excel = None
+        self.excel_path = None
 
-    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool, export_excel: bool):
+    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool, export_excel: bool, excel_path: str):
         """
         """
 
@@ -29,6 +30,7 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.dates = dates
         self.debug = debug
         self.export_excel = export_excel
+        self.excel_path = excel_path
         return self
 
     def transform(self, df):
@@ -87,8 +89,8 @@ class SplitData(BaseEstimator, TransformerMixin):
         x_train = x_train.iloc[:, :7].copy()
 
         if self.export_excel == True:
-            x_valid.to_excel('x_valid_dataset.xlsx')
-            x_train.to_excel('x_train_dataset.xlsx')
+            x_valid.to_excel(f'{self.excel_path}/x_valid_dataset.xlsx')
+            x_train.to_excel(f'{self.excel_path}/x_train_dataset.xlsx')
 
         print("--------> SplitData completed\n")
         return x_train, x_valid, x_train_extremes, x_valid_extremes

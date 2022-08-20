@@ -498,7 +498,8 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         stock = stock.reset_index()
 
         # Get final dataframe
-        trading_formation = stock.tail(self.form_window)
+        # must be added 1 due to wrongly received data via yahoo api
+        trading_formation = stock.tail(self.form_window+1)
 
         if self.debug == True:
             print("Last Close: ", trading_formation.iloc[4, 4])
