@@ -143,6 +143,7 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         trades_df = pd.DataFrame()
         exact_profit = 0
         ccc = 0
+
         #######################################################################
         for candle in range(0, len(df_), 1):
             # print(candle)
@@ -258,7 +259,7 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
 
                     # Adjust revised prediction according to penalization
                     if self.penalization != 0:
-                        temp_df.iloc[5, 8] = predictions
+                        temp_df.iloc[self.window_size-1, 8] = predictions
 
                     temp_df['profit'] = temp_pr
 
@@ -566,6 +567,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
             print("\nBudget: ", self.budget)
             print("\nEntry price: ", round(entry, 2))
             print("Prediction: ", round(ppred, 2))
+            print("Expected Market move: ", round(ppred - entry, 2))
             print("Expected Profit: ", round(profit_pen, 2))
 
         else:

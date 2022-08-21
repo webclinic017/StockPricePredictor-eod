@@ -44,6 +44,7 @@ def PlotTrade(trade, trades_df, window_size, entry_candle, budget):
         return EntryPriceColl, EntryPriceRow
 
     entry_price_column, entry_price_row = GetEntryPriceColl(entry_candle)
+    print("Window size: ", window_size)
 
     entry = selected_df.iloc[window_size-1-entry_price_row, entry_price_column]
     profit = round(selected_df.iloc[window_size-1, 10], 2)
