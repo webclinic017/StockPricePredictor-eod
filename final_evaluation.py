@@ -526,6 +526,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
     def transform(self, df: pd.DataFrame):
         """
         """
+        print("\nTicker: ", self.ticker)
         trading_formation = df.copy()
         tf.keras.losses.sign_penalty = self.sign_penalty
         model = tf.keras.models.load_model(self.model_name, custom_objects={
