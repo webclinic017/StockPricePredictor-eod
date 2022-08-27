@@ -137,11 +137,17 @@ class PullData(BaseEstimator, TransformerMixin):
         trades = 0
         final_df = pd.DataFrame()
 
+        # Conditions possible to place in if decission
+        # Last Close is lower than first indicator
+        condition1 = "final_df_w.iloc[row-1, 4] < final_df_w.iloc[row-1, 5]"
+        # high of trades month is above previous high - we are entering at high of previous week - !!! Entry must be high of prev week
+        condition2 = "final_df_w.iloc[row-1, 2] < final_df_w.iloc[row, 2]"
+
         for row in range(self.form_window, len(final_df_w)):
 
             if final_df_w.iloc[row, 0] == "Month":
 
-                if (self.condition == True and final_df_w.iloc[row-1, 4] < final_df_w.iloc[row-1, 5]):
+                if (self.condition == True and eval(condition2)):
                     temp_df = pd.DataFrame()
 
                     temp_df = final_df_w.iloc[row-self.form_window:row+1, :]

@@ -122,8 +122,8 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
     def transform(self, df: pd.DataFrame):
         """
         """
-        print(f"period: {df.iloc[0,9]} - {df.iloc[df.shape[0]-2,9]}")
         print("Formations: ", int(df.shape[0]/self.window_size))
+        print(f"period: {df.iloc[0,9]} - {df.iloc[df.shape[0]-2,9]}")
 
         # Initialize data items
         df_ = df.copy()
@@ -143,6 +143,7 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         trades_df = pd.DataFrame()
         exact_profit = 0
         ccc = 0
+        TP_counter = 0
 
         #######################################################################
         for candle in range(0, len(df_), 1):
@@ -204,6 +205,9 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
                         #print("predictions: ",predictions)
                         # record profit
                         # calculate profit (condition above) - Entry price + prediction price
+
+                        # Calculate TP counter to get exact profittrade number
+                        TP_counter += 1
 
                         temp_pr = - EntryPrice + predictions
 
@@ -289,6 +293,10 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
             round(profit_trades/trade_counter, 2)*100))
         print("Loss Ratio: {} %".format(
             round(((-profit_trades/trade_counter)+1)*100), 2))
+
+        print("\nTrade nr with exact TP: ", TP_counter)
+        print(f"Ratio of exact TP: {100*round(TP_counter/trade_counter, 2)} %")
+
         print("\nAverage profit per trade: ", round(ttl_profit/trade_counter))
         print("\nGross profit: ", ttl_profit)
         print("Gross loss: ", ttl_loss)
