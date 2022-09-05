@@ -38,7 +38,10 @@ class PullData(BaseEstimator, TransformerMixin):
         self.export_excel = None
         self.excel_path = None
 
-    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int, target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str):
+        self.listed_conditions = None
+
+    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
+            target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str):
         # Data pulling
         self.ticker = ticker
         self.start_date = start_date
@@ -47,6 +50,7 @@ class PullData(BaseEstimator, TransformerMixin):
         self.progress = progress
         self.condition = condition
 
+        self.listed_conditions = listed_conditions
         # Data processing
         self.form_window = form_window
         self.target_window = target_window
@@ -138,10 +142,31 @@ class PullData(BaseEstimator, TransformerMixin):
         final_df = pd.DataFrame()
 
         # Conditions possible to place in if decission
+
+        # high of trades month is above previous high - we are entering at high of previous week - !!! Entry must be high of prev week
+        condition0 = "final_df_w.iloc[row-1, 2] < final_df_w.iloc[row, 2]"
         # Last Close is lower than first indicator
         condition1 = "final_df_w.iloc[row-1, 4] < final_df_w.iloc[row-1, 5]"
-        # high of trades month is above previous high - we are entering at high of previous week - !!! Entry must be high of prev week
-        condition2 = "final_df_w.iloc[row-1, 2] < final_df_w.iloc[row, 2]"
+        # first indicator is lower then second indicator
+        condition2 = "final_df_w.iloc[row-1, 5] < final_df_w.iloc[row-1, 6]"
+        # second indicator is lower then third indicator
+        condition3 = "final_df_w.iloc[row-1, 6] < final_df_w.iloc[row-1, 7]"
+        # Last close is above 1st indicator
+        condition4 = "final_df_w.iloc[row-1, 4] > final_df_w.iloc[row-1, 5]"
+        # first indicator is above second indicator
+        condition5 = "final_df_w.iloc[row-1, 5] > final_df_w.iloc[row-1, 6]"
+        # second indicator is above third indicator
+        condition6 = "final_df_w.iloc[row-1, 6] > final_df_w.iloc[row-1, 7]"
+
+        dicti = {'high_entry': condition0,
+                 'condition1': condition1,
+                 'condition2': condition2,
+                 'condition3': condition3,
+                 'condition4': condition4,
+                 'condition5': condition5,
+                 'condition6': condition6}
+        # if self.condition == True:
+        #     for item in self.listed_conditions:
 
         for row in range(self.form_window, len(final_df_w)):
 
