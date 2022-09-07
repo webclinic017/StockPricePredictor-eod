@@ -1,7 +1,16 @@
 import mplfinance as mpf
 
 
-def PlotTrade(trade, trades_df, window_size, entry_candle, budget):
+def PlotTrade(trade, trades_df, window_size, entry_candle, budget, sentiment):
+
+    # try:
+    #     trades_df = trades_df.drop('APISentiment', axis=1)
+    # except:
+    #     pass
+    mover = 0
+    if sentiment == True:
+        mover = 1
+
     Dates = trades_df['Datetime']
 
     print("Trade: ", trade)
@@ -22,7 +31,7 @@ def PlotTrade(trade, trades_df, window_size, entry_candle, budget):
     datepairs_ema24 = [(d1, d2) for d1, d2 in zip(dates, ema24)]
 
     # #Format Dataframe
-    quotes = selected_df.iloc[:, :10]
+    quotes = selected_df.iloc[:, :10+mover]
     quotes['Datetime'] = quotes['Datetime'].astype('datetime64')
     quotes = quotes.set_index('Datetime')
     quotes = quotes.iloc[:, :4]
@@ -47,17 +56,17 @@ def PlotTrade(trade, trades_df, window_size, entry_candle, budget):
     print("Window size: ", window_size)
 
     entry = selected_df.iloc[window_size-1-entry_price_row, entry_price_column]
-    profit = round(selected_df.iloc[window_size-1, 10], 2)
+    profit = round(selected_df.iloc[window_size-1, 10+mover], 2)
     real_profit = round((budget / entry)*profit, 2)
 
     print(
-        f"Period: {selected_df.iloc[0,9]} - {selected_df.iloc[window_size-2,9]}")
+        f"Period: {selected_df.iloc[0,9+mover]} - {selected_df.iloc[window_size-2,9+mover]}")
     print("\nBudget: ", budget)
     print("\nEntry price: ", round(entry, 2))
     print("Label (target): ", round(selected_df.iloc[window_size-1, 7], 2))
     print("Model prediction: ", round(selected_df.iloc[window_size-1, 8], 2))
     print(
-        f"Market Change: {round(selected_df.iloc[window_size-1, 10], 2)} $")
+        f"Market Change: {round(selected_df.iloc[window_size-1, 10+mover], 2)} $")
     print(f"Profit: {real_profit} $")
 
     mpf.plot(quotes, type='candle', alines=dict(alines=[datepairs_ema6, datepairs_ema12, datepairs_ema24], colors=[

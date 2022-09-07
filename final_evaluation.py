@@ -20,19 +20,26 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
         super().__init__()
         self.dates = None
         self.x_valid = None
+        self.sentiment = None
 
-    def fit(self, dates: List, x_valid: pd.DataFrame):
+    def fit(self, dates: List, x_valid: pd.DataFrame, sentiment: bool):
         """
         """
 
         self.dates = dates
         self.x_valid = x_valid
+        self.sentiment = sentiment
         return self
 
     def transform(self, df: pd.DataFrame):
         """
         """
+        mover = 0
+        if self.sentiment == True:
+            mover = 1
+
         df_ = df.copy()
+
         try:
             self.x_valid.drop('In', axis=1, inplace=True)
         except:
@@ -51,8 +58,8 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
 
         # Remove Month from datetime column
         for row in range(len(merged_df)):
-            if merged_df.iloc[row, 9] == "Month":
-                merged_df.iloc[row, 9] = "2000-11-07 00:00:00"
+            if merged_df.iloc[row, -1] == "Month":
+                merged_df.iloc[row, -1] = "2000-11-07 00:00:00"
 
         merged_df['Datetime'] = pd.to_datetime(merged_df['Datetime'])
 
@@ -71,7 +78,7 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
             start_date = datetime.strptime(start, '%Y-%m-%d').date()
             merged_df.iloc[row, -1] = start_date + timedelta(days=0)
 
-            if merged_df.iloc[row, -2] != "nn":
+            if merged_df.iloc[row, -2-mover] != "nn":
                 start = merged_df.iloc[row-1, -1]
                 start = start.strftime('%Y-%m-%d')
                 start_date = datetime.strptime(start, '%Y-%m-%d').date()
@@ -100,13 +107,14 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         self.export_excel = None
         self.excel_path = None
         self.excel_path = None
+        self.sentiment = None
 
     def profit_calculation(self, difference, stock_price, budget):
         qty = round(budget/stock_price, 0)
 
         return round(difference * qty)
 
-    def fit(self, acceptance: int, penalization: int, entry_candle: str, window_size: int, budget: int, export_excel: bool, excel_path: str):
+    def fit(self, acceptance: int, penalization: int, entry_candle: str, window_size: int, budget: int, export_excel: bool, excel_path: str, sentiment: bool):
         """
         """
         self.acceptance = acceptance
@@ -116,14 +124,18 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         self.budget = budget
         self.export_excel = export_excel
         self.excel_path = excel_path
-
+        self.sentiment = sentiment
         return self
 
     def transform(self, df: pd.DataFrame):
         """
         """
+        mover = 0
+        if self.sentiment == True:
+            mover = 1
+
         print("Formations: ", int(df.shape[0]/self.window_size))
-        print(f"period: {df.iloc[0,9]} - {df.iloc[df.shape[0]-2,9]}")
+        print(f"period: {df.iloc[0,-1]} - {df.iloc[df.shape[0]-2,-1]}")
 
         # Initialize data items
         df_ = df.copy()
@@ -151,11 +163,11 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
             temp_df = pd.DataFrame()
             difference_value = 0
 
-            label = df_.iloc[candle, -3]
-            predictions = df_.iloc[candle, -2]
+            label = df_.iloc[candle, -3-mover]
+            predictions = df_.iloc[candle, -2-mover]
 
             if label != "nn" and predictions != "nn":
-                predictions = df_.iloc[candle, -2] - self.penalization
+                predictions = df_.iloc[candle, -2-mover] - self.penalization
 
                 prev_high = df_.iloc[candle-1, 1]
                 current_high = df_.iloc[candle, 1]
@@ -174,9 +186,12 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
                     return EntryPrice
 
                 EntryPrice = GetEntryPrice(self.entry_candle)
-        #         print("current high: ",current_high)
-        #         print("previous high: ",prev_high)
-        #         print("current open: ",current_open)
+                # print("current high: ", current_high)
+                # print("previous high: ", prev_high)
+                # print("current open: ", current_open)
+                # print("entry: ", EntryPrice)
+                # print("label: ", label)
+                # print("prediction: ", predictions)
         #         break
 
                 # Enter trade
@@ -281,7 +296,7 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         trades_df['trade'] = ""
 
         for row in range(len(trades_df)):
-            trades_df.iloc[row, 11] = counter
+            trades_df.iloc[row, 11+mover] = counter
             if trades_df.iloc[row, 8] != "nn":
                 counter += 1
 
@@ -411,6 +426,8 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         self.penalization = None
         self.budget = None
         self.entry_candle = None
+        self.sentiment = None
+        self.news_df = None
 
     # Customized loss function
     def sign_penalty(y_true, y_pred):
@@ -423,23 +440,35 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         return(tf.reduce_mean(loss, axis=-1))
 
     # Customized functions
-    def norm_df(self, pred1):
+    def norm_df(self, pred1, mover):
         df_temp = pd.DataFrame()
         try:
             pred1 = pred1.drop('Date', axis=1)
         except:
             pass
+        if mover == 1:
+            pred_tmp = pred1.iloc[:, :-mover]
+        else:
+            pred_tmp = pred1.iloc[:, :]
 
-        pred_np = pred1.to_numpy()
+        pred_np = pred_tmp.to_numpy()
         maxv = np.max(pred_np)
         minv = np.min(pred_np)
-        df_temp = (pred1.iloc[:, :]-minv)/(maxv-minv)
+        df_temp = (pred_tmp-minv)/(maxv-minv)
+
+        if mover == 1:
+            news = pred1.iloc[:, -1]
+            df_temp = pd.concat([df_temp, news], axis=1)
 
         return df_temp, maxv, minv
 
-    def revert_df(self, df, maxv, minv):
+    def revert_df(self, df, maxv, minv, mover):
         df_temp = pd.DataFrame()
-        df_temp = (df.iloc[:, :]*(maxv-minv))+minv
+
+        if mover == 1:
+            df_temp = (df.iloc[:, :-mover]*(maxv-minv))+minv
+        else:
+            df_temp = (df.iloc[:, :]*(maxv-minv))+minv
 
         return df_temp
 
@@ -459,9 +488,25 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         qty = round(budget / entry, 0)
         return (prediction - entry) * qty
 
+    def AddSentimentAnalysis(self, df_temp, news_df, sentiment_type):
+        """_summary_
+        """
+        news_df['Date'] = news_df['Date'].astype('datetime64[ns]')
+        news_df['Week'] = news_df['Date'].apply(lambda x: x.week)
+        news_df_agg = news_df.groupby('Week')[sentiment_type].mean()
+        df_temp['Week'] = 0
+        df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
+        df_temp['Date'] = [x.strftime("%Y-%m-%d") for x in df_temp['Date']]
+        df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
+        df_temp['Week'] = df_temp['Date'].apply(lambda x: x.week)
+        df_ttl = df_temp.merge(news_df_agg, on='Week', how='left')
+        df_ttl = df_ttl.drop('Week', axis=1)
+
+        return df_ttl
+
     def fit(self, model_name: str, form_window: int, ticker: str, start_date: str, end_date: str, interval: str,
             progress: bool, condition: bool, timeperiod1: int, timeperiod2: int, timeperiod3: int, debug: bool, budget: int,
-            penalization: int, acceptance: int, entry_candle: str):
+            penalization: int, acceptance: int, entry_candle: str, sentiment: bool, news_df: pd.DataFrame):
         """
         """
 
@@ -486,6 +531,9 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         self.acceptance = acceptance
 
         self.entry_candle = entry_candle
+        self.sentiment = sentiment
+
+        self.news_df = news_df
 
         stock = yf.download(self.ticker,
                             start=self.start_date,
@@ -509,6 +557,13 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         # Get final dataframe
         # must be added 1 due to wrongly received data via yahoo api
         trading_formation = stock.tail(self.form_window+1)
+
+        ###################
+        if self.sentiment == True:
+            trading_formation = self.AddSentimentAnalysis(
+                trading_formation, self.news_df, 'APISentiment')
+            trading_formation.fillna(0, inplace=True)
+        ###################
 
         if self.debug == True:
             print("Last Close: ", trading_formation.iloc[4, 4])
@@ -534,6 +589,10 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
     def transform(self, df: pd.DataFrame):
         """
         """
+        mover = 0
+        if self.sentiment == True:
+            mover = 1
+
         print("\nTicker: ", self.ticker)
         trading_formation = df.copy()
         tf.keras.losses.sign_penalty = self.sign_penalty
@@ -554,11 +613,11 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
                 EntryPriceRow = 0
             return EntryPriceColl, EntryPriceRow
 
-        print()
+        # print()
         entry_coll, entry_row = GetEntryPriceColl(self.entry_candle)
 
         def Predict(pred):
-            df_temp1, maxv, minv = self.norm_df(pred)
+            df_temp1, maxv, minv = self.norm_df(pred, mover)
             pr = self.MakePred(df_temp1, model)
             prediction = self.revert_prediction(pr, maxv, minv)
             prediction = np.squeeze(prediction)

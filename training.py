@@ -20,8 +20,9 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.debug = None
         self.export_excel = None
         self.excel_path = None
+        self.sentiment = None
 
-    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool, export_excel: bool, excel_path: str):
+    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool, export_excel: bool, excel_path: str, sentiment: bool):
         """
         """
 
@@ -31,11 +32,16 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.debug = debug
         self.export_excel = export_excel
         self.excel_path = excel_path
+        self.sentiment = sentiment
         return self
 
     def transform(self, df):
         """
         """
+        mover = 0
+        if self.sentiment == True:
+            mover = 1
+
         df_ = df.copy()
 
         # Make Calculations
@@ -81,12 +87,12 @@ class SplitData(BaseEstimator, TransformerMixin):
         print("x_valid window: ", len(x_valid)/self.window_size)
 
         # Save extreme values
-        x_train_extremes = x_train.iloc[:, 7:].copy()
-        x_valid_extremes = x_valid.iloc[:, 7:].copy()
+        x_train_extremes = x_train.iloc[:, 7+mover:].copy()
+        x_valid_extremes = x_valid.iloc[:, 7+mover:].copy()
 
         # Remove extreme values
-        x_valid = x_valid.iloc[:, :7].copy()
-        x_train = x_train.iloc[:, :7].copy()
+        x_valid = x_valid.iloc[:, :7+mover].copy()
+        x_train = x_train.iloc[:, :7+mover].copy()
 
         if self.export_excel == True:
             x_valid.to_excel(f'{self.excel_path}/x_valid_dataset.xlsx')

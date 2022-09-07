@@ -40,8 +40,11 @@ class PullData(BaseEstimator, TransformerMixin):
 
         self.listed_conditions = None
 
+        self.sentiment = None
+        self.news_df = None
+
     def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
-            target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str):
+            target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str, sentiment: bool, news_df: pd.DataFrame):
         # Data pulling
         self.ticker = ticker
         self.start_date = start_date
@@ -62,12 +65,36 @@ class PullData(BaseEstimator, TransformerMixin):
 
         self.export_excel = export_excel
         self.excel_path = excel_path
+
+        self.sentiment = sentiment
+        self.news_df = news_df
+
         return self
+
+    def AddSentimentAnalysis(self, df_temp, news_df, sentiment_type):
+        """_summary_
+        """
+        news_df['Date'] = news_df['Date'].astype('datetime64[ns]')
+        news_df['Week'] = news_df['Date'].apply(lambda x: x.week)
+        news_df_agg = news_df.groupby('Week')[sentiment_type].mean()
+        df_temp['Week'] = 0
+        df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
+        df_temp['Date'] = [x.strftime("%Y-%m-%d") for x in df_temp['Date']]
+        df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
+        df_temp['Week'] = df_temp['Date'].apply(lambda x: x.week)
+        df_ttl = df_temp.merge(news_df_agg, on='Week', how='left')
+        df_ttl = df_ttl.drop('Week', axis=1)
+
+        return df_ttl
 
     def transform(self):
         """
 
         """
+        mover = 0
+        if self.sentiment == True:
+            mover = -1
+
         # Load Data
         stock = yf.download(self.ticker,
                             start=self.start_date,
@@ -79,6 +106,8 @@ class PullData(BaseEstimator, TransformerMixin):
 
         # Remove nan
         dataframe_ = dataframe_.dropna(axis=0)
+
+        print("initial shape: ", stock.shape)
 
         # Add Indicators
         dataframe_['EMA' + str(self.timeperiod1)] = talib.EMA(
@@ -98,11 +127,17 @@ class PullData(BaseEstimator, TransformerMixin):
         dataframe_['Date'] = pd.to_datetime(
             dataframe_['Date'], format="%Y-%m-%d")
 
+        ###################
+        if self.sentiment == True:
+            dataframe_ = self.AddSentimentAnalysis(
+                dataframe_, self.news_df, 'APISentiment')
+
+        ###################
         final_df_w = pd.DataFrame()
 
         for row in range(len(dataframe_)):
 
-            if row + self.form_window + self.target_window < len(dataframe_):
+            if row + self.form_window + self.target_window <= len(dataframe_):
 
                 temp_df = pd.DataFrame()
                 temp_df = dataframe_.iloc[row:row+self.form_window, :].copy()
@@ -205,6 +240,7 @@ class PullData(BaseEstimator, TransformerMixin):
                 f'{self.excel_path}/{self.ticker}_windowed_dataset.xlsx')
             stock.to_excel(f'{self.excel_path}/{self.ticker}_raw_dataset.xlsx')
 
+            print("Output shape: ", final_df_w.shape)
             print("--------> PullData completed\n")
         return final_df_w
 
@@ -222,8 +258,9 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         self.debug = None
         self.export_excel = None
         self.excel_path = None
+        self.sentiment = None
 
-    def fit(self, window_size: int, shuffle: bool, debug: bool, export_excel: bool, excel_path: str):
+    def fit(self, window_size: int, shuffle: bool, debug: bool, export_excel: bool, excel_path: str, sentiment: int):
         """
         """
 
@@ -232,11 +269,16 @@ class NormalizeData(BaseEstimator, TransformerMixin):
         self.debug = debug
         self.export_excel = export_excel
         self.excel_path = excel_path
+        self.sentiment = sentiment
         return self
 
     def transform(self, df):
         """
         """
+        mover = ""
+        if self.sentiment == True:
+            mover = -1
+
         # Print stuffs
         print("Dataframe shape: ", df.shape)
         formations = int(df.shape[0]/self.window_size)
@@ -303,8 +345,16 @@ class NormalizeData(BaseEstimator, TransformerMixin):
             minv = min(Lows)
 
             # testing
-            maxv = np.max(df.iloc[row:row + self.window_size, :].to_numpy())
-            minv = np.min(df.iloc[row:row + self.window_size, :].to_numpy())
+            if self.sentiment == True:
+                maxv = np.max(
+                    df.iloc[row:row + self.window_size, :mover].to_numpy())
+                minv = np.min(
+                    df.iloc[row:row + self.window_size, :mover].to_numpy())
+            else:
+                maxv = np.max(
+                    df.iloc[row:row + self.window_size, :].to_numpy())
+                minv = np.min(
+                    df.iloc[row:row + self.window_size, :].to_numpy())
             # print(maxv)
             # print(minv)
             # break
@@ -319,15 +369,28 @@ class NormalizeData(BaseEstimator, TransformerMixin):
                       str(df.iloc[row:row + self.window_size, :]))
                 print("\nMax value is ", maxv)
                 print("Min value is ", minv)
-                print("\n Normalized:\n " +
-                      str((df.iloc[row:row + self.window_size, :]-minv)/(maxv-minv)))
+                # print("\n Normalized:\n " +
+                #       str((df.iloc[row:row + self.window_size, :]-minv)/(maxv-minv)))
 
             # Merge normalized window to new dataframe
-            df_temp = (df.iloc[row:row + self.window_size, :]-minv)/(maxv-minv)
+            if self.sentiment == True:
+                df_temp = (df.iloc[row:row + self.window_size,
+                                   :mover]-minv)/(maxv-minv)
+            else:
+                df_temp = (df.iloc[row:row + self.window_size,
+                                   :]-minv)/(maxv-minv)
             df_temp['maxv'] = maxv
             df_temp['minv'] = minv
 
+            if self.sentiment == True:
+                temp_news = df.iloc[row:row + self.window_size, -1]
+                # print(temp_news)
+                df_temp = pd.concat([df_temp, temp_news], axis=1)
+                df_temp = df_temp.iloc[:, [0, 1, 2, 3, 4, 5, 6, 9, 7, 8]]
+                # print(df_temp)
             df_norm = pd.concat([df_norm, df_temp], axis=0)
+
+        # rearrange columns in df so that maxv and minv are at the end of df
 
         if self.export_excel == True:
             df_norm.to_excel(f'{self.excel_path}/normalized_dataset.xlsx')
@@ -351,9 +414,14 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         self.debug = None
         self.x_valid = None
         self.x_valid_x = None
+        self.sentiment = None
 
     def RevertNorm(self, df_final, window_size):
-        ""
+        """_summary_
+        """
+        mover = 0
+        if self.sentiment == True:
+            mover = -1
         # Initialize dataitems
         counter = 0
         inc = 0
@@ -380,8 +448,8 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
             # reset inc
             inc = 0
 
-            maxv = np.squeeze(df_final.iloc[row, 9:-1].to_numpy())
-            minv = np.squeeze(df_final.iloc[row, 10:].to_numpy())
+            maxv = np.squeeze(df_final.iloc[row, -2])  # .to_numpy()
+            minv = np.squeeze(df_final.iloc[row, -1])  # .to_numpy()
 
             if self.debug == True:
                 #########################
@@ -400,18 +468,33 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
                         "\n Reverted:\n " + str((df_final.iloc[row:row + window_size]*(maxv-minv))+minv))
                 ##############################
 
+            if self.sentiment == True:
+                # get sentiment data out of df
+                news_df = df_final.iloc[row:row + window_size, -5]
+
+            ddf = df_final.iloc[row:row + window_size, :]
+
+            try:
+                ddf = ddf.drop('APISentiment', axis=1)
+            except:
+                pass
+
             # Merge normalized window to new dataframe
-            df_temp = (df_final.iloc[row:row +
-                       window_size, :]*(maxv-minv))+minv
+            df_temp = (ddf*(maxv-minv))+minv
+            # df_temp = (df_final.iloc[row:row +
+            #            window_size, :]*(maxv-minv))+minv
+
+            if self.sentiment == True:
+                df_temp = pd.concat([df_temp, news_df], axis=1)
 
             df_rev = pd.concat([df_rev, df_temp], axis=0)
 
-        # get final df
-        df_rev = df_rev.iloc[:, :9]
+        # get final df, remove maxv and minv from df #df_rev = df_rev.iloc[:, :]
+        df_rev = df_rev.drop(labels=['maxv', 'minv'], axis=1)
 
         return df_rev
 
-    def fit(self, forecasts: List, labels: List, window_size: int, debug: bool, x_valid: pd.DataFrame, x_valid_x: pd.DataFrame):
+    def fit(self, forecasts: List, labels: List, window_size: int, debug: bool, x_valid: pd.DataFrame, x_valid_x: pd.DataFrame, sentiment: bool):
         """
         """
 
@@ -421,6 +504,7 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         self.x_valid = x_valid
         self.x_valid_x = x_valid_x
         self.debug = debug
+        self.sentiment = sentiment
         return self
 
     def transform(self):
