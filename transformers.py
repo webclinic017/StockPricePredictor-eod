@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from sklearn.utils import shuffle
+from datetime import datetime
+from datetime import timedelta
+
 warnings.filterwarnings("ignore")
 
 tf.random.set_seed(7788)
@@ -42,9 +45,12 @@ class PullData(BaseEstimator, TransformerMixin):
 
         self.sentiment = None
         self.news_df = None
+        self.sentiment_type = None
 
     def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
-            target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str, sentiment: bool, news_df: pd.DataFrame):
+            target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str,
+            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame):
+
         # Data pulling
         self.ticker = ticker
         self.start_date = start_date
@@ -67,6 +73,7 @@ class PullData(BaseEstimator, TransformerMixin):
         self.excel_path = excel_path
 
         self.sentiment = sentiment
+        self.sentiment_type = sentiment_type
         self.news_df = news_df
 
         return self
@@ -75,16 +82,15 @@ class PullData(BaseEstimator, TransformerMixin):
         """_summary_
         """
         news_df['Date'] = news_df['Date'].astype('datetime64[ns]')
-        news_df['Week'] = news_df['Date'].apply(lambda x: x.week)
-        news_df_agg = news_df.groupby('Week')[sentiment_type].mean()
-        df_temp['Week'] = 0
+
+        news_df_agg = news_df.groupby('Date')[sentiment_type].mean()
+        news_df_agg.to_excel('adjusted_df_news.xlsx')
         df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
         df_temp['Date'] = [x.strftime("%Y-%m-%d") for x in df_temp['Date']]
         df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
-        df_temp['Week'] = df_temp['Date'].apply(lambda x: x.week)
-        df_ttl = df_temp.merge(news_df_agg, on='Week', how='left')
-        df_ttl = df_ttl.drop('Week', axis=1)
 
+        df_ttl = df_temp.merge(news_df_agg, on='Date', how='left')
+        df_ttl[sentiment_type] = df_ttl[sentiment_type].fillna(0)
         return df_ttl
 
     def transform(self):
@@ -128,9 +134,21 @@ class PullData(BaseEstimator, TransformerMixin):
             dataframe_['Date'], format="%Y-%m-%d")
 
         ###################
+        def AdjustDate(df):
+            for row in range(df.shape[0]):
+                date = df.iloc[row, 0]
+                delta = date.weekday()
+                df.iloc[row, 0] = df.iloc[row, 0] - timedelta(days=delta)
+            return df
+
         if self.sentiment == True:
+            self.news_df.to_excel("initial_news.xlsx")
+
+            self.news_df = AdjustDate(self.news_df)
+
+            # self.news_df.to_excel("adjusted_news.xlsx")
             dataframe_ = self.AddSentimentAnalysis(
-                dataframe_, self.news_df, 'APISentiment')
+                dataframe_, self.news_df, self.sentiment_type)
 
         ###################
         final_df_w = pd.DataFrame()
@@ -415,6 +433,7 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         self.x_valid = None
         self.x_valid_x = None
         self.sentiment = None
+        self.sentiment_type = None
 
     def RevertNorm(self, df_final, window_size):
         """_summary_
@@ -475,7 +494,7 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
             ddf = df_final.iloc[row:row + window_size, :]
 
             try:
-                ddf = ddf.drop('APISentiment', axis=1)
+                ddf = ddf.drop(self.sentiment_type, axis=1)
             except:
                 pass
 
@@ -494,7 +513,7 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
 
         return df_rev
 
-    def fit(self, forecasts: List, labels: List, window_size: int, debug: bool, x_valid: pd.DataFrame, x_valid_x: pd.DataFrame, sentiment: bool):
+    def fit(self, forecasts: List, labels: List, window_size: int, debug: bool, x_valid: pd.DataFrame, x_valid_x: pd.DataFrame, sentiment: bool, sentiment_type: str):
         """
         """
 
@@ -505,6 +524,7 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         self.x_valid_x = x_valid_x
         self.debug = debug
         self.sentiment = sentiment
+        self.sentiment_type = sentiment_type
         return self
 
     def transform(self):

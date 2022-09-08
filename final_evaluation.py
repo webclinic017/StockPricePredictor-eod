@@ -21,14 +21,17 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
         self.dates = None
         self.x_valid = None
         self.sentiment = None
+        self.sentiment_type = None
 
-    def fit(self, dates: List, x_valid: pd.DataFrame, sentiment: bool):
+    def fit(self, dates: List, x_valid: pd.DataFrame, sentiment: bool, sentiment_type: str):
         """
         """
 
         self.dates = dates
         self.x_valid = x_valid
         self.sentiment = sentiment
+        self.sentiment_type = sentiment_type
+
         return self
 
     def transform(self, df: pd.DataFrame):
@@ -83,6 +86,11 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
                 start = start.strftime('%Y-%m-%d')
                 start_date = datetime.strptime(start, '%Y-%m-%d').date()
                 merged_df.iloc[row, -1] = start_date + timedelta(days=1)
+
+        # Remove sentiment from labelling row as it is monthy candle
+        for row in range(merged_df.shape[0]):
+            if merged_df.loc[row, 'labels'] != "nn":
+                merged_df.loc[row, self.sentiment_type] = "nn"
 
         print("--------> GetFinalDataframe\n")
         return merged_df
@@ -428,6 +436,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         self.entry_candle = None
         self.sentiment = None
         self.news_df = None
+        self.sentiment_type = None
 
     # Customized loss function
     def sign_penalty(y_true, y_pred):
@@ -506,7 +515,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
 
     def fit(self, model_name: str, form_window: int, ticker: str, start_date: str, end_date: str, interval: str,
             progress: bool, condition: bool, timeperiod1: int, timeperiod2: int, timeperiod3: int, debug: bool, budget: int,
-            penalization: int, acceptance: int, entry_candle: str, sentiment: bool, news_df: pd.DataFrame):
+            penalization: int, acceptance: int, entry_candle: str, sentiment: bool, news_df: pd.DataFrame, sentiment_type: str):
         """
         """
 
@@ -532,7 +541,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
 
         self.entry_candle = entry_candle
         self.sentiment = sentiment
-
+        self.sentiment_type = sentiment_type
         self.news_df = news_df
 
         stock = yf.download(self.ticker,
@@ -561,7 +570,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         ###################
         if self.sentiment == True:
             trading_formation = self.AddSentimentAnalysis(
-                trading_formation, self.news_df, 'APISentiment')
+                trading_formation, self.news_df, self.sentiment_type)
             trading_formation.fillna(0, inplace=True)
         ###################
 
