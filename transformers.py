@@ -135,9 +135,14 @@ class PullData(BaseEstimator, TransformerMixin):
 
         ###################
         def AdjustDate(df):
+
+            df['Date'] = df['Date'].astype('datetime64[ns]')
+            df['Date'] = [x.strftime("%Y-%m-%d") for x in df['Date']]
+
             for row in range(df.shape[0]):
-                date = df.iloc[row, 0]
-                delta = date.weekday()
+                #date = df.iloc[row, 0]
+                df['Date'] = df['Date'].astype('datetime64[ns]')
+                delta = df.iloc[row, 0].weekday()
                 df.iloc[row, 0] = df.iloc[row, 0] - timedelta(days=delta)
             return df
 

@@ -29,13 +29,13 @@ def baseline_model():
     return model_baseline
 
 
-def mrk_model():
+def mrk_model(features: int):
     model = tf.keras.models.Sequential([
 
         tf.keras.layers.Conv1D(filters=8, kernel_size=1,
                                strides=1, padding="same",
                                activation=tf.nn.selu,
-                               input_shape=[None, 7]),
+                               input_shape=[None, features]),
         tf.keras.layers.Conv1D(filters=16, kernel_size=1,
                                strides=1, padding="same",
                                activation=tf.nn.selu,

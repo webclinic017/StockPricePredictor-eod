@@ -88,9 +88,13 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
                 merged_df.iloc[row, -1] = start_date + timedelta(days=1)
 
         # Remove sentiment from labelling row as it is monthy candle
-        for row in range(merged_df.shape[0]):
-            if merged_df.loc[row, 'labels'] != "nn":
-                merged_df.loc[row, self.sentiment_type] = "nn"
+        if self.sentiment == True:
+            for row in range(merged_df.shape[0]):
+                if merged_df.loc[row, 'labels'] != "nn":
+                    merged_df.loc[row, self.sentiment_type] = 0
+
+            merged_df[self.sentiment_type] = merged_df[self.sentiment_type].astype(
+                'float')
 
         print("--------> GetFinalDataframe\n")
         return merged_df
