@@ -441,10 +441,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         self.sentiment = None
         self.news_df = None
         self.sentiment_type = None
-<<<<<<< HEAD
         self.sentiment_aggr = None
-=======
->>>>>>> main
 
     # Customized loss function
     def sign_penalty(y_true, y_pred):
@@ -509,7 +506,6 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         """_summary_
         """
         news_df['Date'] = news_df['Date'].astype('datetime64[ns]')
-<<<<<<< HEAD
 
         if self.sentiment_aggr == "mean":
             news_df_agg = news_df.groupby('Date')[sentiment_type].mean()
@@ -520,8 +516,6 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         if self.sentiment_aggr == "median":
             news_df_agg = news_df.groupby('Date')[sentiment_type].median()
 
-=======
->>>>>>> main
         news_df['Week'] = news_df['Date'].apply(lambda x: x.week)
         news_df_agg = news_df.groupby('Week')[sentiment_type].mean()
         df_temp['Week'] = 0
@@ -536,11 +530,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
 
     def fit(self, model_name: str, form_window: int, ticker: str, start_date: str, end_date: str, interval: str,
             progress: bool, condition: bool, timeperiod1: int, timeperiod2: int, timeperiod3: int, debug: bool, budget: int,
-<<<<<<< HEAD
             penalization: int, acceptance: int, entry_candle: str, sentiment: bool, news_df: pd.DataFrame, sentiment_type: str, sentiment_aggr: str):
-=======
-            penalization: int, acceptance: int, entry_candle: str, sentiment: bool, news_df: pd.DataFrame, sentiment_type: str):
->>>>>>> main
         """
         """
 
@@ -568,11 +558,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         self.sentiment = sentiment
         self.sentiment_type = sentiment_type
         self.news_df = news_df
-<<<<<<< HEAD
         self.sentiment_aggr = sentiment_aggr
-=======
-
->>>>>>> main
         stock = yf.download(self.ticker,
                             start=self.start_date,
                             end=self.end_date,

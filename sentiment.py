@@ -87,24 +87,17 @@ class GetNews(BaseEstimator, TransformerMixin):
         vader = SentimentIntensityAnalyzer()
 
         # sentiment-roberta-large-english
-<<<<<<< HEAD
         # news_df['RobertaLargeSentiment'] = 0
         # news_df['RobertaLargeLabel'] = 0
 
         # RobertaLarge = pipeline(
         #     "sentiment-analysis", model="siebert/sentiment-roberta-large-english")
-=======
-        news_df['RobertaLargeSentiment'] = 0
-        RobertaLarge = pipeline(
-            "sentiment-analysis", model="siebert/sentiment-roberta-large-english")
->>>>>>> main
 
         for row in range(news_df.shape[0]):
             title = news_df.iloc[row, 1]
             title = f'"{title}"'
             content = news_df.iloc[row, 2]
             score = vader.polarity_scores(title)
-<<<<<<< HEAD
             compound_score = score['compound']
             news_df.loc[row, 'VaderSentiment'] = compound_score
 
@@ -113,13 +106,6 @@ class GetNews(BaseEstimator, TransformerMixin):
             # label_roberta = output_roberta[0]['label']
             # news_df.loc[row, 'RobertaLargeSentiment'] = score_roberta
             # news_df.loc[row, 'RobertaLargeLabel'] = label_roberta
-=======
-            output_roberta = RobertaLarge(title)
-            score_roberta = output_roberta[0]['score']
-            compound_score = score['compound']
-            news_df.loc[row, 'VaderSentiment'] = compound_score
-            news_df.loc[row, 'RobertaLargeSentiment'] = score_roberta
->>>>>>> main
 
         # calculate combined sentiment
         for row in range(news_df.shape[0]):

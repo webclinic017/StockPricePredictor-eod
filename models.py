@@ -70,7 +70,6 @@ def mrk_model(features: int):
     return model
 
 
-<<<<<<< HEAD
 def mrk_model_sent_medium(features: int):
 
     def sign_penalty(y_true, y_pred):
@@ -125,8 +124,6 @@ def mrk_model_sent_medium(features: int):
     return model
 
 
-=======
->>>>>>> main
 def clb_model(features: int):
     model = tf.keras.models.Sequential([
 
