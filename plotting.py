@@ -1,7 +1,16 @@
 import mplfinance as mpf
 
 
-def PlotTrade(trade, trades_df, window_size, entry_candle, budget):
+def PlotTrade(trade, trades_df, window_size, entry_candle, budget, sentiment):
+
+    # try:
+    #     trades_df = trades_df.drop('APISentiment', axis=1)
+    # except:
+    #     pass
+    mover = 0
+    if sentiment == True:
+        mover = 1
+
     Dates = trades_df['Datetime']
 
     print("Trade: ", trade)
@@ -22,9 +31,16 @@ def PlotTrade(trade, trades_df, window_size, entry_candle, budget):
     datepairs_ema24 = [(d1, d2) for d1, d2 in zip(dates, ema24)]
 
     # #Format Dataframe
-    quotes = selected_df.iloc[:, :10]
+    quotes = selected_df.iloc[:, :10+mover]
     quotes['Datetime'] = quotes['Datetime'].astype('datetime64')
     quotes = quotes.set_index('Datetime')
+    # quotes.iloc[-1,10]
+    # quotes.iloc[-1,0]
+    # dicti = {'Price':[quotes.iloc[-1,0]],'Datetime':[quotes.iloc[-1,10]]}
+    #df__ = pd.DataFrame(dicti)
+    if sentiment == True:
+        sentim = quotes.iloc[:, 9]
+
     quotes = quotes.iloc[:, :4]
     quotes.columns = ['open', 'high', 'low', 'close']
 
@@ -47,28 +63,40 @@ def PlotTrade(trade, trades_df, window_size, entry_candle, budget):
     print("Window size: ", window_size)
 
     entry = selected_df.iloc[window_size-1-entry_price_row, entry_price_column]
-    profit = round(selected_df.iloc[window_size-1, 10], 2)
+    profit = round(selected_df.iloc[window_size-1, 10+mover], 2)
     real_profit = round((budget / entry)*profit, 2)
 
     print(
-        f"Period: {selected_df.iloc[0,9]} - {selected_df.iloc[window_size-2,9]}")
+        f"Period: {selected_df.iloc[0,9+mover]} - {selected_df.iloc[window_size-2,9+mover]}")
     print("\nBudget: ", budget)
     print("\nEntry price: ", round(entry, 2))
     print("Label (target): ", round(selected_df.iloc[window_size-1, 7], 2))
     print("Model prediction: ", round(selected_df.iloc[window_size-1, 8], 2))
     print(
-        f"Market Change: {round(selected_df.iloc[window_size-1, 10], 2)} $")
+        f"Market Change: {round(selected_df.iloc[window_size-1, 10+mover], 2)} $")
     print(f"Profit: {real_profit} $")
 
-    mpf.plot(quotes, type='candle', alines=dict(alines=[datepairs_ema6, datepairs_ema12, datepairs_ema24], colors=[
-        'r', 'g', 'b']))  # datepairs_ema12,datepairs_ema24
+    if sentiment == True:
+        sentiment_data = [mpf.make_addplot(
+            sentim, type='bar', markersize=200, marker='v', panel=1)]
 
+        mpf.plot(quotes, addplot=sentiment_data, type='candle', style='starsandstripes',
+                 alines=dict(alines=[datepairs_ema6, datepairs_ema12, datepairs_ema24], colors=['r', 'g', 'b']), panel_ratios=(1, 0.25),
+                 figscale=1.5)  # datepairs_ema12,datepairs_ema24 ,figratio=(1,1)
+    else:
+        mpf.plot(quotes, type='candle', style='starsandstripes',
+                 alines=dict(alines=[datepairs_ema6, datepairs_ema12, datepairs_ema24], colors=[
+                             'r', 'g', 'b']),
+                 figscale=1.5)  # datepairs_ema12,datepairs_ema24 ,figratio=(1,1)
     return selected_df
 
 
-def PlotCurrentFormation(trade_formation):
+def PlotCurrentFormation(trade_formation, sentiment):
 
     selected_df = trade_formation.reset_index()
+
+    if sentiment == True:
+        sentim = selected_df.iloc[:, -1]
 
     # Get EMAs
     dates = selected_df['Date']
@@ -94,9 +122,17 @@ def PlotCurrentFormation(trade_formation):
         pass
 
     # Plot
-    quotes = quotes.iloc[:, :8]
+    quotes = quotes.iloc[:, :7]
+    # print(quotes)
     quotes.columns = ['open', 'high', 'low', 'close', 'ema6', 'ema12', 'ema24']
 
     # Plot Chart
-    mpf.plot(quotes, type='candle', alines=dict(alines=[
-             datepairs_ema6, datepairs_ema12, datepairs_ema24], colors=['r', 'g', 'b']))
+    if sentiment == False:
+        mpf.plot(quotes, type='candle', figscale=1.5, alines=dict(alines=[
+            datepairs_ema6, datepairs_ema12, datepairs_ema24], colors=['r', 'g', 'b']))
+    else:
+        sentiment_data = [mpf.make_addplot(
+            sentim, type='bar', markersize=200, marker='v', panel=1)]
+
+        mpf.plot(quotes, addplot=sentiment_data, type='candle', figscale=1.5, panel_ratios=(1, 0.25), alines=dict(alines=[
+            datepairs_ema6, datepairs_ema12, datepairs_ema24], colors=['r', 'g', 'b']))
