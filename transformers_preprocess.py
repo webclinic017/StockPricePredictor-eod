@@ -46,11 +46,18 @@ class PullData(BaseEstimator, TransformerMixin):
         self.sentiment = None
         self.news_df = None
         self.sentiment_type = None
+<<<<<<< HEAD
         self.sentiment_aggr = None
 
     def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
             target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str,
             sentiment: bool, sentiment_type: str, news_df: pd.DataFrame, sentiment_aggr: str):
+=======
+
+    def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
+            target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str,
+            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame):
+>>>>>>> main
 
         # Data pulling
         self.ticker = ticker
@@ -76,7 +83,10 @@ class PullData(BaseEstimator, TransformerMixin):
         self.sentiment = sentiment
         self.sentiment_type = sentiment_type
         self.news_df = news_df
+<<<<<<< HEAD
         self.sentiment_aggr = sentiment_aggr
+=======
+>>>>>>> main
 
         return self
 
@@ -85,6 +95,7 @@ class PullData(BaseEstimator, TransformerMixin):
         """
         news_df['Date'] = news_df['Date'].astype('datetime64[ns]')
 
+<<<<<<< HEAD
         if self.sentiment_aggr == "mean":
             news_df_agg = news_df.groupby('Date')[sentiment_type].mean()
         if self.sentiment_aggr == "max":
@@ -96,6 +107,10 @@ class PullData(BaseEstimator, TransformerMixin):
 
         news_df_agg.to_excel('./Excel reports/adjusted_df_news.xlsx')
 
+=======
+        news_df_agg = news_df.groupby('Date')[sentiment_type].mean()
+        news_df_agg.to_excel('adjusted_df_news.xlsx')
+>>>>>>> main
         df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
         df_temp['Date'] = [x.strftime("%Y-%m-%d") for x in df_temp['Date']]
         df_temp['Date'] = df_temp['Date'].astype('datetime64[ns]')
@@ -158,7 +173,11 @@ class PullData(BaseEstimator, TransformerMixin):
             return df
 
         if self.sentiment == True:
+<<<<<<< HEAD
             self.news_df.to_excel("./Excel reports/initial_news.xlsx")
+=======
+            self.news_df.to_excel("initial_news.xlsx")
+>>>>>>> main
 
             self.news_df = AdjustDate(self.news_df)
 
