@@ -47,10 +47,11 @@ class PullData(BaseEstimator, TransformerMixin):
         self.news_df = None
         self.sentiment_type = None
         self.sentiment_aggr = None
+        self.chart_period = None
 
     def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
             target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str,
-            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame, sentiment_aggr: str):
+            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame, sentiment_aggr: str, chart_period: str):
 
         # Data pulling
         self.ticker = ticker
@@ -77,7 +78,7 @@ class PullData(BaseEstimator, TransformerMixin):
         self.sentiment_type = sentiment_type
         self.news_df = news_df
         self.sentiment_aggr = sentiment_aggr
-
+        self.chart_period = chart_period
         return self
 
     def AddSentimentAnalysis(self, df_temp, news_df, sentiment_type):
@@ -160,7 +161,8 @@ class PullData(BaseEstimator, TransformerMixin):
         if self.sentiment == True:
             self.news_df.to_excel("./Excel reports/initial_news.xlsx")
 
-            self.news_df = AdjustDate(self.news_df)
+            if self.chart_period == "1wk":
+                self.news_df = AdjustDate(self.news_df)
 
             # self.news_df.to_excel("adjusted_news.xlsx")
             dataframe_ = self.AddSentimentAnalysis(
