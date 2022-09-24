@@ -322,7 +322,8 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
             round(((-profit_trades/trade_counter)+1)*100), 2))
 
         print("\nTrade nr with exact TP: ", TP_counter)
-        print(f"Ratio of exact TP: {100*round(TP_counter/trade_counter, 2)} %")
+        print(
+            f"Ratio of exact TP: {round(100*(TP_counter/trade_counter),2)} %")
 
         print("\nAverage profit per trade: ", round(ttl_profit/trade_counter))
         print("\nGross profit: ", ttl_profit)
