@@ -1,7 +1,7 @@
 <i>DISCLAIMER:
 This repository is only for informative purpose, i renounce any responsibility regarding this code and trained model causing loss of money during trading on real market.</i>
 
-# Stock Predictions
+# Stock Price Predictor
 This repository enables design deep neural network model to predict price movement for respective stock in selected time frame. It consists of one main jupyter notebook and additional python scripts that includes objects responsible for entire pre-processing, testing and evaluating steps. It is coded in object oriented programming and it is highly customizable from main notebook.<br><br>
 Jupyter notebook (01_main.ipynb) calls objects from added pyscripts, entire notebook is triggered via cells one by one in following order to 
 -	Setup parameters such as ticker, period, window size etc.
