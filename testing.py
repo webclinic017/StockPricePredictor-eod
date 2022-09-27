@@ -66,7 +66,8 @@ def optimize(models: list,
              epochs: int,
              verbose: int,
              window_size: int,
-             callbacks: list) -> pd.DataFrame:
+             callbacks: list,
+             layer: int) -> pd.DataFrame:
 
     def model_forecast1(model, series, window_size, debug):
         """
@@ -101,7 +102,7 @@ def optimize(models: list,
 
     result = []
 
-    def train(model: tf.keras.Sequential) -> dict:
+    def train(model: tf.keras.Sequential, layer: int) -> dict:
         result_list = []
 
         optimizer2 = tf.keras.optimizers.Adam(
@@ -115,14 +116,15 @@ def optimize(models: list,
             model, X_test, window_size=window_size, debug=False)
         result_list = sign_penalty(labels, forecast).numpy()
         dicti = {'model_name': model.name,
-                 'validation_loss': result_list}
-        print(dicti)
+                 'validation_loss': result_list,
+                 'layers': layer}
+        # print(dicti)
         return dicti
 
     for model in models:
 
-        print(model.name, end=' ... ')
-        res = train(model=model)
+        #print(model.name, end=' ... ')
+        res = train(model=model, layer=layer)
         result.append(res)
 
     df_final = pd.DataFrame(result)
