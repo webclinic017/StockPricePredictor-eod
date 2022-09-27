@@ -19,7 +19,7 @@ Jupyter notebook (01_main.ipynb) calls objects from added pyscripts, entire note
 -	Make single prediction with most recent data
 
 <b>Sentiment Analysis</b>
--	We use API to access https://eodhistoricaldata.com to get news and twitter tweets for respective stock. API is received in json format and already includes sentiment analysis from provider. We however add additional Vader analysis from nltk library that is applied on news titles. As result we get dataset with several sentiment analyses that can be used for model training and we can select which SA we prefer or which SA is better understandable for model.
+-	We use API to access https://eodhistoricaldata.com to get news and twitter tweets for respective stock. API is received in json format and already includes sentiment analysis from provider. We however add additional Vader analysis from nltk library that is applied on news titles. As result we get dataset with several sentiment analyses that can be used for model training and we can select which SA we prefer or which SA is better understandable for model. This service however requires api key, that you have to get from provider (you have to subscribe). Another option.. you can switch sentiment analysis off and model will be train only on historical data.
 
 <b>Pull stock dataset</b>
 -	We use yahoo finance API to access and pull stock prices
