@@ -24,12 +24,12 @@ Jupyter notebook (01_main.ipynb) calls objects from added pyscripts, entire note
 <b>Pull stock dataset</b>
 -	We use yahoo finance API to access and pull stock prices
 -	We use talib library to add moving averages to dataset
--	Dataset is windowed for model training
-o	There is set formation window and label.
-o	Each row in dataset represents a candle
-o	Formation window represents candle formation that model sees, and label contains highest value of following candle (or candles) that model tries to predict
-o	For instance, chart period is 1wk (one row in dataset represents 1 trading week)
-o	Formation window – 4, target window - 1 (label), it means that entire dataset is split in 5 candle window, consisting of 4 candles of formation, 1 candle of label. Those windows are transformed into tensors, separated to batches and feed to neural network to train.
+-	Dataset is windowed for model training<br>
+o	There is set formation window and label.<br>
+o	Each row in dataset represents a candle<br>
+o	Formation window represents candle formation that model sees, and label contains highest value of following candle (or candles) that model tries to predict<br>
+o	For instance, chart period is 1wk (one row in dataset represents 1 trading week)<br>
+o	Formation window – 4, target window - 1 (label), it means that entire dataset is split in 5 candle window, consisting of 4 candles of formation, 1 candle of label. Those windows are transformed into tensors, formed to batches and feed to neural network to train.<br>
 
 <b>Data normalization</b>
 -	We have to normalize dataset to similar scale between 0 and 1. Each window has its unique normalization and has scale between 0 – 1, therefore there is removed issue with skewed dataset (for instance, stock had in a year 2000 price 2 dollars, in 2022 it has 220 dollars, with applied normalization each window has the same scale and therefore model training will not be negatively affected.
