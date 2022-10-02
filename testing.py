@@ -3,6 +3,10 @@ import itertools
 import numpy as np
 import pandas as pd
 
+from datetime import datetime
+
+# datetime object containing current date and time
+
 
 def get_models(num_layers: int,
                min: int,
@@ -67,7 +71,12 @@ def optimize(models: list,
              verbose: int,
              window_size: int,
              callbacks: list,
-             layer: int) -> pd.DataFrame:
+             layer: int,
+             ticker: str) -> pd.DataFrame:
+
+    counter = 0
+    now = datetime.now()
+    now = now.strftime("%d%m%Y %H%M%S")
 
     def model_forecast1(model, series, window_size, debug):
         """
@@ -122,10 +131,17 @@ def optimize(models: list,
         return dicti
 
     for model in models:
-
+        counter += 1
         #print(model.name, end=' ... ')
         res = train(model=model, layer=layer)
         result.append(res)
+
+        if counter == 10:
+            df_final = pd.DataFrame(result)
+            df_final = df_final.sort_values(
+                by='validation_loss', ascending=True)
+            df_final.to_excel(f'{ticker}_{layer}_performance_{now}.xlsx')
+            counter = 0
 
     df_final = pd.DataFrame(result)
     df_final = df_final.sort_values(by='validation_loss', ascending=True)
