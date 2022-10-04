@@ -72,7 +72,8 @@ def optimize(models: list,
              window_size: int,
              callbacks: list,
              layer: int,
-             ticker: str) -> pd.DataFrame:
+             ticker: str,
+             excel_path: str) -> pd.DataFrame:
 
     counter = 0
     now = datetime.now()
@@ -136,11 +137,12 @@ def optimize(models: list,
         res = train(model=model, layer=layer)
         result.append(res)
 
-        if counter == 10:
+        if counter == 1:
             df_final = pd.DataFrame(result)
             df_final = df_final.sort_values(
                 by='validation_loss', ascending=True)
-            df_final.to_excel(f'{ticker}_{layer}_performance_{now}.xlsx')
+            df_final.to_excel(
+                f'{excel_path}/{ticker}_{layer}_performance_{now}.xlsx')
             counter = 0
 
     df_final = pd.DataFrame(result)
