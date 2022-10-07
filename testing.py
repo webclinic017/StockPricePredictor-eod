@@ -2,8 +2,9 @@ import tensorflow as tf
 import itertools
 import numpy as np
 import pandas as pd
-
 from datetime import datetime
+tf.random.set_seed(7788)
+np.random.seed(7788)
 
 # datetime object containing current date and time
 
@@ -12,7 +13,6 @@ def get_models(num_layers: int,
                min: int,
                max: int,
                node_step_size: int,
-               lstm_included: bool,
                features: int,
                hidden_layer_activation: str = 'selu',
                num_nodes_at_output: int = 1,
@@ -23,43 +23,56 @@ def get_models(num_layers: int,
     layer_node_permutations = list(itertools.product(*layer_possibilities))
 
     models = []
-
+    model_nnames = []
     for permutation in layer_node_permutations:
-        model = tf.keras.Sequential()
 
-        model.add(tf.keras.layers.Conv1D(filters=20, kernel_size=1,
-                                         strides=1, padding="same",
-                                         activation=tf.nn.selu,
-                                         input_shape=[None, features]))
-        if lstm_included == False:
-            model.add(tf.keras.layers.Bidirectional(
-                tf.keras.layers.LSTM(2, return_sequences=True)))
-            model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(2)))
+        kernels = [1, 10]
 
-        model_name = ''
-        counter = 0
-        for nodes_at_layer in permutation:
-            if lstm_included == True and counter < 2:
-                if counter == 0:
+        for kernel in kernels:
+            model = tf.keras.Sequential()
+            model_name = ""
+
+            counter_lstm = 0
+            counter_cnn = 0
+
+            for nodes_at_layer in permutation:
+                if counter_cnn < 1:
+                    model.add(tf.keras.layers.Conv1D(filters=nodes_at_layer, kernel_size=kernel,
+                                                     strides=1, padding="same",
+                                                     activation=tf.nn.selu,
+                                                     input_shape=[None, features]))
+
+                    model_name += f'CNN-nodes-{nodes_at_layer}_kernel{kernel}'
+
+                if counter_lstm == 1 and counter_cnn == 1:
                     model.add(tf.keras.layers.Bidirectional(
                         tf.keras.layers.LSTM(nodes_at_layer, return_sequences=True)))
                     model_name += f'lstmBI-{nodes_at_layer}_'
-                if counter == 1:
+
+                if counter_lstm == 2:
                     model.add(tf.keras.layers.Bidirectional(
                         tf.keras.layers.LSTM(nodes_at_layer)))
                     model_name += f'lstm-{nodes_at_layer}_'
-            else:
-                model.add(tf.keras.layers.Dense(nodes_at_layer,
-                          activation=hidden_layer_activation))
-                model_name += f'dense{nodes_at_layer}_'
-            counter += 1
 
-        model.add(tf.keras.layers.Dense(num_nodes_at_output,
-                  activation=output_layer_activation))
-        model._name = model_name[:-1]
-        models.append(model)
+                if counter_cnn >= 1 and counter_lstm >= 3:
+                    model.add(tf.keras.layers.Dense(nodes_at_layer,
+                                                    activation=hidden_layer_activation))
+                    model_name += f'dense{nodes_at_layer}_'
 
-    return models
+                counter_cnn += 1
+                counter_lstm += 1
+
+            # Finalize final model
+            model.add(tf.keras.layers.Dense(num_nodes_at_output,
+                                            activation=output_layer_activation))
+
+            # Get Name
+            model._name = model_name[:-1]
+            print(model._name)
+            models.append(model)
+            model_nnames.append(model._name)
+
+    return models, model_nnames
 
 
 def optimize(models: list,
@@ -119,7 +132,7 @@ def optimize(models: list,
             learning_rate=0.0007, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False)
         model.compile(loss=sign_penalty, optimizer=optimizer2)
 
-        model.fit(X_train, epochs=epochs, verbose=verbose,
+        model.fit(X_train, epochs=epochs, verbose=0,
                   validation_data=X_valid, callbacks=[callbacks])
 
         forecast = model_forecast1(
@@ -137,7 +150,7 @@ def optimize(models: list,
         res = train(model=model, layer=layer)
         result.append(res)
 
-        if counter == 1:
+        if counter == 10:
             df_final = pd.DataFrame(result)
             df_final = df_final.sort_values(
                 by='validation_loss', ascending=True)
