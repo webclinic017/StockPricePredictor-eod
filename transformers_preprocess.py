@@ -12,7 +12,9 @@ import tensorflow as tf
 from sklearn.utils import shuffle
 from datetime import datetime
 from datetime import timedelta
-
+import requests
+import eod
+from eod import EodHistoricalData
 warnings.filterwarnings("ignore")
 
 tf.random.set_seed(7788)
@@ -48,10 +50,12 @@ class PullData(BaseEstimator, TransformerMixin):
         self.sentiment_type = None
         self.sentiment_aggr = None
         self.chart_period = None
+        self.eod_API = None
+        self.eod_key = None
 
     def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
             target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str,
-            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame, sentiment_aggr: str, chart_period: str):
+            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame, sentiment_aggr: str, chart_period: str, eod_API: bool, eod_key: str):
 
         # Data pulling
         self.ticker = ticker
@@ -79,6 +83,9 @@ class PullData(BaseEstimator, TransformerMixin):
         self.news_df = news_df
         self.sentiment_aggr = sentiment_aggr
         self.chart_period = chart_period
+
+        self.eod_key = eod_key
+        self.eod_API = eod_API
         return self
 
     def AddSentimentAnalysis(self, df_temp, news_df, sentiment_type):
@@ -113,13 +120,25 @@ class PullData(BaseEstimator, TransformerMixin):
         if self.sentiment == True:
             mover = -1
 
-        # Load Data
-        stock = yf.download(self.ticker,
-                            start=self.start_date,
-                            end=self.end_date,
-                            interval=self.interval,
-                            progress=self.progress,
-                            )
+        # Load Data via different API calls
+        if self.eod_API == False:
+            stock = yf.download(self.ticker,
+                                start=self.start_date,
+                                end=self.end_date,
+                                interval=self.interval,
+                                progress=self.progress,
+                                )
+
+        else:
+
+            client = EodHistoricalData(self.eod_key)
+            stock = pd.DataFrame(client.get_prices_eod(
+                self.ticker, period=self.interval, from_=self.start_date))
+            print(stock.head(5))
+            stock.rename(columns={'date': 'Date', 'open': 'Open', 'high': 'High', 'low': 'Low',
+                         'close': 'Close', 'adjusted_close': 'Adj Close', 'volume': 'Volume'}, inplace=True)
+            stock.set_index('Date', inplace=True)
+
         dataframe_ = stock.copy()
 
         # Remove nan
