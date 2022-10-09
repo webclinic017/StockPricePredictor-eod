@@ -51,11 +51,11 @@ class PullData(BaseEstimator, TransformerMixin):
         self.sentiment_aggr = None
         self.chart_period = None
         self.eod_API = None
-        self.eod_key = None
+        self.api_key = None
 
     def fit(self, ticker: str, start_date: str, end_date: str, interval: str, progress: bool, condition: bool, form_window: int,
             target_window: int, timeperiod1: int, timeperiod2: int, timeperiod3: int, export_excel: bool, excel_path: str, listed_conditions: str,
-            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame, sentiment_aggr: str, chart_period: str, eod_API: bool, eod_key: str):
+            sentiment: bool, sentiment_type: str, news_df: pd.DataFrame, sentiment_aggr: str, chart_period: str, eod_API: bool, api_key: str):
 
         # Data pulling
         self.ticker = ticker
@@ -84,7 +84,7 @@ class PullData(BaseEstimator, TransformerMixin):
         self.sentiment_aggr = sentiment_aggr
         self.chart_period = chart_period
 
-        self.eod_key = eod_key
+        self.api_key = api_key
         self.eod_API = eod_API
         return self
 
@@ -131,10 +131,10 @@ class PullData(BaseEstimator, TransformerMixin):
 
         else:
 
-            client = EodHistoricalData(self.eod_key)
+            client = EodHistoricalData(self.api_key)
             stock = pd.DataFrame(client.get_prices_eod(
                 self.ticker, period=self.interval, from_=self.start_date))
-            print(stock.head(5))
+            # print(stock.head(5))
             stock.rename(columns={'date': 'Date', 'open': 'Open', 'high': 'High', 'low': 'Low',
                          'close': 'Close', 'adjusted_close': 'Adj Close', 'volume': 'Volume'}, inplace=True)
             stock.set_index('Date', inplace=True)
