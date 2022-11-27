@@ -170,6 +170,7 @@ def clb_model(features: int):
 
 
 def stne_model():
+
     model = tf.keras.models.Sequential([
 
         tf.keras.layers.Conv1D(filters=8, kernel_size=1,
@@ -212,4 +213,27 @@ def stne_model():
 
     # model.fit(x_train_tensors, epochs=1200, callbacks=[
     #         callbacks], validation_data=x_valid_tensors)
+    return model
+
+
+def aapl_1week_model(features):
+    """_summary_
+    condition 1 implemented in data
+    """
+    model = tf.keras.models.Sequential([
+
+        tf.keras.layers.Conv1D(filters=4, kernel_size=10,
+                               strides=1, padding="same",
+                               activation=tf.nn.selu,
+                               input_shape=[None, features]),
+        tf.keras.layers.Bidirectional(
+            tf.keras.layers.LSTM(3, return_sequences=True)),
+        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(2)),
+        tf.keras.layers.Dense(6, activation=tf.nn.selu),
+        tf.keras.layers.Dense(4, activation=tf.nn.selu),
+        tf.keras.layers.Dense(4, activation=tf.nn.selu),
+        tf.keras.layers.Dense(4, activation=tf.nn.selu),
+
+        tf.keras.layers.Dense(1, activation=tf.nn.relu),
+    ])
     return model

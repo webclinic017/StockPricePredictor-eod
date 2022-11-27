@@ -19,16 +19,16 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
 
         super().__init__()
         self.dates = None
-        self.x_valid = None
+        self.x_test = None
         self.sentiment = None
         self.sentiment_type = None
 
-    def fit(self, dates: List, x_valid: pd.DataFrame, sentiment: bool, sentiment_type: str):
+    def fit(self, dates: List, x_test: pd.DataFrame, sentiment: bool, sentiment_type: str):
         """
         """
 
         self.dates = dates
-        self.x_valid = x_valid
+        self.x_test = x_test
         self.sentiment = sentiment
         self.sentiment_type = sentiment_type
 
@@ -44,12 +44,12 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
         df_ = df.copy()
 
         try:
-            self.x_valid.drop('In', axis=1, inplace=True)
+            self.x_test.drop('In', axis=1, inplace=True)
         except:
             pass
 
         # Get start of validation dataset
-        val_start = len(self.dates)-self.x_valid.shape[0]
+        val_start = len(self.dates)-self.x_test.shape[0]
         Dates_val = self.dates[val_start:]
         dicti = {"Datetime": Dates_val,
                  'In': np.arange(len(Dates_val))

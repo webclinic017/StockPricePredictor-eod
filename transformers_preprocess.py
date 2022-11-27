@@ -171,7 +171,7 @@ class PullData(BaseEstimator, TransformerMixin):
             df['Date'] = [x.strftime("%Y-%m-%d") for x in df['Date']]
 
             for row in range(df.shape[0]):
-                #date = df.iloc[row, 0]
+                # date = df.iloc[row, 0]
                 df['Date'] = df['Date'].astype('datetime64[ns]')
                 delta = df.iloc[row, 0].weekday()
                 df.iloc[row, 0] = df.iloc[row, 0] - timedelta(days=delta)
@@ -206,7 +206,7 @@ class PullData(BaseEstimator, TransformerMixin):
                 # print(temp_df2)
                 # break
                 if maxv == np.nan:
-                    #print(temp_df2.iloc[:, 1:4])
+                    # print(temp_df2.iloc[:, 1:4])
                     break
 
                 openv = temp_df2.iloc[0, 1]
@@ -247,6 +247,10 @@ class PullData(BaseEstimator, TransformerMixin):
         condition5 = "final_df_w.iloc[row-1, 5] > final_df_w.iloc[row-1, 6]"
         # second indicator is above third indicator
         condition6 = "final_df_w.iloc[row-1, 6] > final_df_w.iloc[row-1, 7]"
+        # second indicator is above last close
+        condition7 = "final_df_w.iloc[row-1, 4] < final_df_w.iloc[row-1, 6]"
+        # Ross hook uptrend
+        ross_hook_condition = "final_df_w.iloc[row-1, 4] > final_df_w.iloc[row-1, 5] and final_df_w.iloc[row-1, 2] < final_df_w.iloc[row, 2] and previous_high < final_df_w.iloc[row-2, 2] and final_df_w.iloc[row-2, 2] > final_df_w.iloc[row-3, 2]"
 
         dicti = {'high_entry': condition0,
                  'condition1': condition1,
@@ -257,12 +261,14 @@ class PullData(BaseEstimator, TransformerMixin):
                  'condition6': condition6}
         # if self.condition == True:
         #     for item in self.listed_conditions:
+        previous_high = final_df_w.iloc[row-1, 2]
 
         for row in range(self.form_window, len(final_df_w)):
 
             if final_df_w.iloc[row, 0] == "Month":
 
-                if (self.condition == True and eval(condition0)):
+                if (self.condition == True and eval(condition3)):  # eval(condition4)
+
                     temp_df = pd.DataFrame()
 
                     temp_df = final_df_w.iloc[row-self.form_window:row+1, :]
@@ -488,7 +494,7 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         # Loop through each window separately to normalize
         for row in range(0, len(df_final), window_size):
 
-            #print("\nCurrent row is: ",row)
+            # print("\nCurrent row is: ",row)
             counter += 1
             df_temp = pd.DataFrame()
 
@@ -571,7 +577,7 @@ class ReverseNormalization(BaseEstimator, TransformerMixin):
         y_prediction = []
         y_labels = []
         counter = 0
-        #x_valid_new = pd.DataFrame()
+        # x_valid_new = pd.DataFrame()
         x_valid_ = self.x_valid
 
         for item in range(len(self.forecasts)):

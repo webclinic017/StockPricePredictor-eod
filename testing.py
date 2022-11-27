@@ -68,7 +68,7 @@ def get_models(num_layers: int,
 
             # Get Name
             model._name = model_name[:-1]
-            print(model._name)
+            # print(model._name)
             models.append(model)
             model_nnames.append(model._name)
 
@@ -155,7 +155,7 @@ def optimize(models: list,
             df_final = df_final.sort_values(
                 by='validation_loss', ascending=True)
             df_final.to_excel(
-                f'{excel_path}/{ticker}_{layer}_performance_{now}.xlsx')
+                f'{excel_path}/{ticker}_{layer}_performance.xlsx')
             counter = 0
 
     df_final = pd.DataFrame(result)
