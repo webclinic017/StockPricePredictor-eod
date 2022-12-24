@@ -17,13 +17,13 @@ def PlotTrade(trade, trades_df, window_size, entry_candle, budget, sentiment):
 
     selected_df = trades_df[trades_df['trade'] == trade]
 
-    # Get EMAs
+    # Get EMAs df.iloc[:,4]
     dates = selected_df['Datetime']
-    ema6 = selected_df['EMA6']
+    ema6 = selected_df.iloc[:, 4]  # selected_df['EMA6']
     ema6 = ema6[:-1]
-    ema12 = selected_df['EMA12']
+    ema12 = selected_df.iloc[:, 5]  # selected_df['EMA12']
     ema12 = ema12[:-1]
-    ema24 = selected_df['EMA24']
+    ema24 = selected_df.iloc[:, 6]  # selected_df['EMA24']
     ema24 = ema24[:-1]
 
     datepairs_ema6 = [(d1, d2) for d1, d2 in zip(dates, ema6)]
