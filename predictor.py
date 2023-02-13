@@ -6,7 +6,6 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import yfinance as yf
-import talib
 
 
 class MakeSinglePrediction(BaseEstimator, TransformerMixin):
@@ -166,12 +165,12 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         stock = stock.dropna(axis=0)
         stock = stock.drop(labels=['Adj Close', 'Volume'], axis=1)
 
-        stock[f'EMA{self.timeperiod1}'] = talib.EMA(
-            stock['Close'], timeperiod=self.timeperiod1)
-        stock[f'EMA{self.timeperiod2}'] = talib.EMA(
-            stock['Close'], timeperiod=self.timeperiod2)
-        stock[f'EMA{self.timeperiod3}'] = talib.EMA(
-            stock['Close'], timeperiod=self.timeperiod3)
+        stock['EMA' + str(self.timeperiod1)] = stock['Close'].ewm(
+            span=self.timeperiod1, adjust=False).mean()
+        stock['EMA' + str(self.timeperiod2)] = stock['Close'].ewm(
+            span=self.timeperiod2, adjust=False).mean()
+        stock['EMA' + str(self.timeperiod3)] = stock['Close'].ewm(
+            span=self.timeperiod3, adjust=False).mean()
 
         # Reset index
         stock = stock.reset_index()

@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 import yfinance as yf
-import talib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -133,12 +132,19 @@ class PullData(BaseEstimator, TransformerMixin):
         print("initial shape: ", stock.shape)
 
         # Add Indicators
-        dataframe_['EMA' + str(self.timeperiod1)] = talib.EMA(
-            dataframe_['Close'], timeperiod=self.timeperiod1)
-        dataframe_['EMA' + str(self.timeperiod2)] = talib.EMA(
-            dataframe_['Close'], timeperiod=self.timeperiod2)
-        dataframe_['EMA' + str(self.timeperiod3)] = talib.EMA(
-            dataframe_['Close'], timeperiod=self.timeperiod3)
+        # dataframe_['EMA' + str(self.timeperiod1)] = talib.EMA(
+        #     dataframe_['Close'], timeperiod=self.timeperiod1)
+        # dataframe_['EMA' + str(self.timeperiod2)] = talib.EMA(
+        #     dataframe_['Close'], timeperiod=self.timeperiod2)
+        # dataframe_['EMA' + str(self.timeperiod3)] = talib.EMA(
+        #     dataframe_['Close'], timeperiod=self.timeperiod3)
+
+        dataframe_['EMA' + str(self.timeperiod1)] = dataframe_['Close'].ewm(
+            span=self.timeperiod1, adjust=False).mean()
+        dataframe_['EMA' + str(self.timeperiod2)] = dataframe_['Close'].ewm(
+            span=self.timeperiod2, adjust=False).mean()
+        dataframe_['EMA' + str(self.timeperiod3)] = dataframe_['Close'].ewm(
+            span=self.timeperiod3, adjust=False).mean()
 
         try:
             dataframe_ = dataframe_.drop(
