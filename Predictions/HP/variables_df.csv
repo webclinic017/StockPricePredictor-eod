@@ -1,9 +1,8 @@
 ,0
-model_name,hp_model_2023-02-02_2218.h5
-Date,2023-02-02
+model_name,hp_model_2023-02-14_3075.h5
+Date,2023-02-14
 ticker,hp
 period,1wk
-eod_data_api,False
 api_key,631505e804ec58.42743136
 sentiment,True
 sentiment_type,TwitterSentiment
@@ -19,11 +18,11 @@ indicator2,8
 indicator3,21
 window_size,4
 twitter,True
-start_date,2019-01-01
-end_date,2023-01-29
+start_date,2018-01-01
+end_date,2023-02-12
 batch_size_train,6
 batch_size_valid,2
-shuffle,False
+shuffle,True
 entry_candle,Current Open
 excel_reports,.\Excel reports
 acceptance,1

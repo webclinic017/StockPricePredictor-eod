@@ -26,8 +26,9 @@ class GetNews(BaseEstimator, TransformerMixin):
         self.offset = None
         self.export_excel = None
         self.twitter = None
+        self.temp_folder = None
 
-    def fit(self, token: str, ticker: str, start_date: str, end_date: str, n_news: int, offset: int, export_excel: bool, twitter: bool):
+    def fit(self, token: str, ticker: str, start_date: str, end_date: str, n_news: int, offset: int, export_excel: bool, twitter: bool, temp_folder: str):
         """
         """
 
@@ -39,6 +40,7 @@ class GetNews(BaseEstimator, TransformerMixin):
         self.n_news = n_news
         self.offset = offset
         self.twitter = twitter
+        self.temp_folder = temp_folder
         return self
 
     def get_customized_news1(self, stock, start_date, end_date, n_news, api_key, offset, twitter):
@@ -142,7 +144,7 @@ class GetNews(BaseEstimator, TransformerMixin):
             news_df.to_excel(
                 f'.\Excel reports\{self.ticker} sentiment_analysis_final.xlsx')
             news_df.to_excel(
-                f'.\Temp\{self.ticker}_sentiment_analysis_final.xlsx')
+                f'{self.temp_folder }/{self.ticker}_sentiment_analysis_final.xlsx')
 
         print("--------> GetNews completed\n")
         return news_df
