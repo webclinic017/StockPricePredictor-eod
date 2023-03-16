@@ -1,20 +1,22 @@
-import warnings
-import pandas as pd
-import numpy as np
-from sklearn.base import BaseEstimator, TransformerMixin
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
-import yfinance as yf
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import tensorflow as tf
-from sklearn.utils import shuffle
-from datetime import datetime
-from datetime import timedelta
-import requests
-import eod
 from eod import EodHistoricalData
-warnings.filterwarnings("ignore")
+import eod
+import requests
+from datetime import timedelta
+from datetime import datetime
+from sklearn.utils import shuffle
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import yfinance as yf
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from sklearn.base import BaseEstimator, TransformerMixin
+import numpy as np
+import pandas as pd
+# import os
+# import warnings
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# warnings.filterwarnings('ignore')
+#logging.getLogger('tensorflow').disabled = True
+
 
 tf.random.set_seed(7788)
 np.random.seed(7788)

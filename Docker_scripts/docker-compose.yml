@@ -1,0 +1,12 @@
+version: '3'
+services:
+  predictions: # name of project
+    build:
+      context: .                  #from where project files are taken and loaded
+      dockerfile: Dockerfile.dev
+    image: intel_prediction
+    container_name: my-fabulous-predictor
+    ports:
+      - '4000:80'
+    volumes:
+      - .:/app

@@ -1,11 +1,13 @@
-from datetime import datetime
-from datetime import timedelta
-from sklearn.base import BaseEstimator, TransformerMixin
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
-import tensorflow as tf
+
+import warnings
 import pandas as pd
 import numpy as np
 import yfinance as yf
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from sklearn.base import BaseEstimator, TransformerMixin
+from datetime import timedelta
+from datetime import datetime
+import tensorflow as tf
 
 
 class GetFinalDataframe(BaseEstimator, TransformerMixin):
@@ -603,8 +605,8 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         if (self.condition == True):
             if (self.condition == True):  # add conditions
                 entry = trading_formation.iloc[len(trading_formation)-1, 4]
-                print("\nTrading condition passed, you can make prediction")
-                print("\nEntry price: ", round(entry, 4))
+                #print("\nTrading condition passed, you can make prediction")
+                #print("\nEntry price: ", round(entry, 4))
             else:
                 print("condition NOT passed, do NOT trade")
 
@@ -617,7 +619,6 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         if self.sentiment == True:
             mover = 1
 
-        print("\nTicker: ", self.ticker)
         trading_formation = df.copy()
         tf.keras.losses.sign_penalty = self.sign_penalty
         model = tf.keras.models.load_model(self.model_name, custom_objects={
@@ -653,10 +654,12 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
 
         ppred = round(pred-self.penalization, 5)
         profit_pen = self.Profit_calculation(self.budget, entry, ppred)
-
-        print(f'\nEntry candle ({self.entry_candle})')
-        print("\nBudget: ", self.budget)
-        print("\nEntry price: ", round(entry, 2))
+        #print("\n__________________________________")
+        print("\n")
+        print("Ticker: ", str.upper(self.ticker))
+        print(f'Entry candle: {self.entry_candle}')
+        print("Budget: ", self.budget)
+        print("Entry price: ", round(entry, 2))
         print("Prediction: ", round(ppred, 2))
         print("Expected Market move: ", round(ppred - entry, 2))
         print("Expected Profit: ", round(profit_pen, 2))

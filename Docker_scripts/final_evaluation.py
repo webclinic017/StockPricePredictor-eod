@@ -654,9 +654,10 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         ppred = round(pred-self.penalization, 5)
         profit_pen = self.Profit_calculation(self.budget, entry, ppred)
 
-        print(f'\nEntry candle ({self.entry_candle})')
-        print("\nBudget: ", self.budget)
-        print("\nEntry price: ", round(entry, 2))
+        print("\n________________________________")
+        print(f'Entry candle: {self.entry_candle}')
+        print("Budget: ", self.budget)
+        print("Entry price: ", round(entry, 2))
         print("Prediction: ", round(ppred, 2))
         print("Expected Market move: ", round(ppred - entry, 2))
         print("Expected Profit: ", round(profit_pen, 2))

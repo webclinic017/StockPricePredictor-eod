@@ -1,24 +1,28 @@
 # Import libraries
-#from final_evaluation import MakeSinglePrediction
-import warnings
-import logging
-from final_evaluation import GetModelPerformance
-from predictions_docker import prediction
-from final_evaluation_docker import MakeSinglePrediction
-from datetime import datetime
-import pandas as pd
-import sys
 import os
+import warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 warnings.filterwarnings('ignore')
 
-logging.getLogger('tensorflow').disabled = True
+from final_evaluation_docker import MakeSinglePrediction
+from predictions_docker import prediction
+from final_evaluation import GetModelPerformance
+from datetime import date
+from datetime import datetime
+import pandas as pd
+import sys
+import logging
+from datetime import timedelta
+from datetime import datetime
+from datetime import date
+from datetime import datetime, timedelta
+import datetime
 
+#logging.getLogger('tensorflow').disabled = True
 # sys.path.append('../../')
-
 # Read variable excel
 variables_df = pd.read_csv('./files/variables_df.csv', index_col=[0])
-# print(variables_df)
+
 # Extract variables
 variables_dict = variables_df.to_dict()['0']
 batch_size = int(variables_dict['batch_size_valid'])
@@ -49,15 +53,42 @@ Dates = pd.read_csv(f'./files/{ticker}_Dates.csv', index_col=[0])
 Dates = Dates.iloc[:, 0]
 print("Data unpacked...")
 # Run it
-print("run it")
+
 MakeSinglePrediction = MakeSinglePrediction()
+
+
+current_date = date.today()
+current_date = current_date.strftime('%Y-%m-%d')
+
+# Assuming the date is stored as a string
+date_string = current_date
+
+# Convert the date string to a datetime object
+date_object = datetime.datetime.strptime(date_string, '%Y-%m-%d')
+moveBack = 0
+
+while moveBack < 6:
+    
+    # Subtract two days from the datetime object
+    new_date_object = date_object - datetime.timedelta(days=moveBack)
+
+    day = new_date_object.strftime('%A')
+    #print(day)
+    
+    if day == 'Sunday':
+        revised_date = new_date_object.strftime('%Y-%m-%d') 
+        #print("break loop",revised_date)
+        break
+    else:
+        moveBack+=1
+
 
 fit_output = MakeSinglePrediction.fit(
     model_name=model_name,
     form_window=formation_window,
     ticker=ticker,
     start_date="2019-03-18",
-    end_date="2023-03-12",
+    end_date=revised_date,
     interval=period,  # 1wk
     progress=False,
     condition=condition,
@@ -92,11 +123,13 @@ def GetDay(df):
             break
     return revised_df
 
-print("run it2")
+
+print("\nToday's date: ", current_date)
 df = GetDay(trade_formation)
 print("\nPrint Data...")
 print(df)
 print("\nMake prediction...")
 # Make prediction
 MakeSinglePrediction.transform(df)
-# print("Done...")
+print("\n")
+
