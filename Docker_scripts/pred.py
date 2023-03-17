@@ -83,9 +83,8 @@ while moveBack < 6:
     day = new_date_object.strftime('%A')
     #print(day)
     
-    if day == 'Sunday':
+    if (day == 'Sunday') or (day == 'Satturday'):
         revised_date = new_date_object.strftime('%Y-%m-%d') 
-        #print("break loop",revised_date)
         break
     else:
         moveBack+=1
@@ -140,6 +139,7 @@ from_date = from_date.strftime('%Y-%m-%d')
 to_date = to_date.strftime('%Y-%m-%d')
 
 print("\nPrint Data...")
+pd.set_option('display.max_columns', None)
 print(df)
 print("\n____________________________________________________")
 print("Make prediction...")

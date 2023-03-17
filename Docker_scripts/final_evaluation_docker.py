@@ -310,8 +310,8 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
                 counter += 1
         print("\n____________________________________________________")
         print("Summary...")
-        print("\nFormations: ", int(df.shape[0]/self.window_size))
         print(f"period: {df.iloc[0,-1]} - {df.iloc[df.shape[0]-2,-1]}")
+        print("\nFormations: ", int(df.shape[0]/self.window_size))
         print("Entry Candle: ", self.entry_candle)
         print("\nTotal Trades: ", trade_counter)
         print("Profit Trades: ", profit_trades)
@@ -323,7 +323,7 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
 
         print("\nReal Win Trades: ", TP_counter)
         print(
-            f"Real Win Trades Ratio (%): {round(100*(TP_counter/trade_counter),2)}")
+            f"Real Win Trades (%): {round(100*(TP_counter/trade_counter),2)}")
 
         print("\nAverage profit per trade: ", round(ttl_profit/trade_counter))
         print("\nGross profit: ", ttl_profit)

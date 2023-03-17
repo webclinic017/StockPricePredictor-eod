@@ -5,7 +5,7 @@ services:
       context: .                  #from where project files are taken and loaded
       dockerfile: Dockerfile.dev
     image: intel_prediction
-    container_name: my-fabulous-predictor
+    container_name: tsla
     ports:
       - '4000:80'
     volumes:
