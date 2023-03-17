@@ -1,5 +1,4 @@
 
-import warnings
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -97,7 +96,7 @@ class GetFinalDataframe(BaseEstimator, TransformerMixin):
             merged_df[self.sentiment_type] = merged_df[self.sentiment_type].astype(
                 'float')
 
-        print("--------> GetFinalDataframe\n")
+        #print("--------> GetFinalDataframe\n")
         return merged_df
 
 
@@ -146,9 +145,6 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         mover = 0
         if self.sentiment == True:
             mover = 1
-
-        print("Formations: ", int(df.shape[0]/self.window_size))
-        print(f"period: {df.iloc[0,-1]} - {df.iloc[df.shape[0]-2,-1]}")
 
         # Initialize data items
         df_ = df.copy()
@@ -312,7 +308,10 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
             trades_df.iloc[row, 11+mover] = counter
             if trades_df.iloc[row, 8] != "nn":
                 counter += 1
-
+        print("\n____________________________________________________")
+        print("Summary...")
+        print("\nFormations: ", int(df.shape[0]/self.window_size))
+        print(f"period: {df.iloc[0,-1]} - {df.iloc[df.shape[0]-2,-1]}")
         print("Entry Candle: ", self.entry_candle)
         print("\nTotal Trades: ", trade_counter)
         print("Profit Trades: ", profit_trades)
@@ -322,14 +321,14 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         print("Loss Ratio: {} %".format(
             round(((-profit_trades/trade_counter)+1)*100), 2))
 
-        print("\nTrade nr with exact TP: ", TP_counter)
+        print("\nReal Win Trades: ", TP_counter)
         print(
-            f"Ratio of exact TP: {round(100*(TP_counter/trade_counter),2)} %")
+            f"Real Win Trades Ratio (%): {round(100*(TP_counter/trade_counter),2)}")
 
         print("\nAverage profit per trade: ", round(ttl_profit/trade_counter))
         print("\nGross profit: ", ttl_profit)
         print("Gross loss: ", ttl_loss)
-        print("\nNet profit: ", ttl_profit+ttl_loss)
+        print("Net profit: ", ttl_profit+ttl_loss)
 
         if self.export_excel == True:
             trades_df.to_excel(f'{self.excel_path}/total_trades.xlsx')
@@ -409,7 +408,7 @@ class GetPerformanceReport(BaseEstimator, TransformerMixin):
             performance_report.to_excel(
                 f'{self.excel_path}/Performance_report.xlsx')
 
-        print("--------> GetPerformanceReport completed\n")
+       #print("--------> GetPerformanceReport completed\n")
         return performance_report
 
 
@@ -496,7 +495,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         pr = series.to_numpy()
         series2 = np.array([[pr]])
         pred = tf.data.Dataset.from_tensor_slices(series2)
-        prediction = model.predict(pred)
+        prediction = model.predict(pred,verbose=None)
 
         return prediction
 
@@ -653,13 +652,15 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
         pred = Predict(trading_formation)
 
         ppred = round(pred-self.penalization, 5)
-        profit_pen = self.Profit_calculation(self.budget, entry, ppred)
-        #print("\n__________________________________")
-        print("\n")
-        print("Ticker: ", str.upper(self.ticker))
-        print(f'Entry candle: {self.entry_candle}')
-        print("Budget: ", self.budget)
-        print("Entry price: ", round(entry, 2))
-        print("Prediction: ", round(ppred, 2))
-        print("Expected Market move: ", round(ppred - entry, 2))
-        print("Expected Profit: ", round(profit_pen, 2))
+        if (ppred - entry) < self.acceptance:
+            print("Acceptance was not meet, do not trade.")
+        else:
+            profit_pen = self.Profit_calculation(self.budget, entry, ppred)
+            print("\n")
+            print("Ticker: ", str.upper(self.ticker))
+            print(f'Entry candle: {self.entry_candle}')
+            print("Budget: ", self.budget)
+            print("Entry price: ", round(entry, 2))
+            print("Prediction: ", round(ppred, 2))
+            print("Expected Market move: ", round(ppred - entry, 2))
+            print("Expected Profit: ", round(profit_pen, 2))

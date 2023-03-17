@@ -2,6 +2,7 @@ def prediction():
     import pandas as pd
     import tensorflow as tf
     import numpy as np
+    from functions_docker import model_forecast
 
     # Read excel with variables
     variables_df = pd.read_csv('./files/variables_df.csv', index_col=[0])
@@ -47,12 +48,12 @@ def prediction():
     tf.keras.losses.sign_penalty = sign_penalty
     model = tf.keras.models.load_model(f'./files/{model_name}', custom_objects={
         'sign_penalty': sign_penalty})
-    from functions import model_forecast
+    
 
     forecast = model_forecast(
         model, x_test, window_size=window_size, debug=False)
 
-    from training import GetTensoredDataset
+    from training_docker import GetTensoredDataset
 
     GetTensoredValidDataset = GetTensoredDataset()
 
@@ -61,7 +62,7 @@ def prediction():
 
     x_test_tensors, labels = GetTensoredValidDataset.transform(x_test)
 
-    from transformers_preprocess import ReverseNormalization
+    from transformers_preprocess_docker import ReverseNormalization
 
     ReverseNormalization = ReverseNormalization()
 
@@ -71,7 +72,7 @@ def prediction():
 
     df = ReverseNormalization.transform()
 
-    from final_evaluation import GetFinalDataframe
+    from final_evaluation_docker import GetFinalDataframe
 
     GetFinalDataframe = GetFinalDataframe()
 

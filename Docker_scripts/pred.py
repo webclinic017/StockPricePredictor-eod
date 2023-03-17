@@ -3,26 +3,18 @@ import os
 import warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 warnings.filterwarnings('ignore')
-
 from final_evaluation_docker import MakeSinglePrediction
+from final_evaluation_docker import GetModelPerformance
 from predictions_docker import prediction
-from final_evaluation import GetModelPerformance
 from datetime import date
 from datetime import datetime
 import pandas as pd
-import sys
-import logging
-from datetime import timedelta
-from datetime import datetime
-from datetime import date
-from datetime import datetime, timedelta
 import datetime
 
-#logging.getLogger('tensorflow').disabled = True
-# sys.path.append('../../')
+print("\nScript started...")
+
 # Read variable excel
 variables_df = pd.read_csv('./files/variables_df.csv', index_col=[0])
-
 # Extract variables
 variables_dict = variables_df.to_dict()['0']
 batch_size = int(variables_dict['batch_size_valid'])
@@ -43,7 +35,7 @@ period = variables_dict['period']
 formation_window = int(variables_dict['formation_window'])
 acceptance = float(variables_dict['acceptance'])
 penalization = float(variables_dict['penalization'])
-
+budget = 10000
 # Read excels
 x_test = pd.read_csv(f'./files/{ticker}_test_data.csv', index_col=[0])
 x_test_x = pd.read_csv(f'./files/{ticker}_x_test_x.csv', index_col=[0])
@@ -51,11 +43,27 @@ news_df = pd.read_excel(
     f'./files/{ticker}_sentiment_analysis_final.xlsx', index_col=[0])
 Dates = pd.read_csv(f'./files/{ticker}_Dates.csv', index_col=[0])
 Dates = Dates.iloc[:, 0]
-print("Data unpacked...")
+
+
 # Run it
+performance_df = prediction()
 
+#print(f"ticker: {str.upper(ticker)}\n")
+#print("entry candle: ",entry_candle)
+
+GetModelPerformance = GetModelPerformance()
+
+GetModelPerformance.fit(acceptance=acceptance,
+                            penalization=penalization,
+                            entry_candle=entry_candle,  # Current Open
+                            budget=budget,
+                            window_size=window_size,
+                            export_excel=False,
+                            excel_path=excel_reports,
+                            sentiment=sentiment)
+
+trades_df = GetModelPerformance.transform(performance_df)
 MakeSinglePrediction = MakeSinglePrediction()
-
 
 current_date = date.today()
 current_date = current_date.strftime('%Y-%m-%d')
@@ -96,7 +104,7 @@ fit_output = MakeSinglePrediction.fit(
     timeperiod2=indicator2,
     timeperiod3=indicator3,
     debug=False,
-    budget=10000,
+    budget=budget,
     penalization=penalization,
     acceptance=acceptance,
     entry_candle='Current Close',
@@ -123,13 +131,23 @@ def GetDay(df):
             break
     return revised_df
 
-
-print("\nToday's date: ", current_date)
+print("\n____________________________________________________")
 df = GetDay(trade_formation)
+
+from_date = df.iloc[-1,0] + datetime.timedelta(7)
+to_date = from_date + datetime.timedelta(5)
+from_date = from_date.strftime('%Y-%m-%d')
+to_date = to_date.strftime('%Y-%m-%d')
+
 print("\nPrint Data...")
 print(df)
-print("\nMake prediction...")
+print("\n____________________________________________________")
+print("Make prediction...")
+print("Today's date: ", current_date)
+print(f"Predicted period: {from_date} - {to_date}")
 # Make prediction
 MakeSinglePrediction.transform(df)
+#print("Penalization: ",penalization)
+#print("Acceptance: ",acceptance)
 print("\n")
 
