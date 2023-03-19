@@ -1,0 +1,29 @@
+,0
+model_name,tsla_model_2023-03-16_5017.h5
+Date,16/03/2023
+ticker,tsla
+period,1wk
+api_key,631505e804ec58.42743136
+sentiment,TRUE
+sentiment_type,TwitterSentiment
+aggr_function,median
+formation_window,4
+target_window,1
+split_ratio,0.7
+test_ratio,0.15
+validation_ratio,0.15
+condition,FALSE
+indicator1,5
+indicator2,8
+indicator3,21
+window_size,5
+twitter,TRUE
+start_date,01/01/2019
+end_date,12/03/2023
+batch_size_train,6
+batch_size_valid,2
+shuffle,TRUE
+entry_candle,Current Open
+excel_reports,.\Excel reports
+acceptance,1
+penalization,0.5
