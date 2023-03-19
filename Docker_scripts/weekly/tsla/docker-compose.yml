@@ -1,6 +1,6 @@
 version: '3'
 services:
-  predictions: # name of project
+  TSLApredictions: # name of project
     build:
       context: .                  #from where project files are taken and loaded
       dockerfile: Dockerfile.dev

@@ -309,9 +309,7 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
             if trades_df.iloc[row, 8] != "nn":
                 counter += 1
         
-        print("\n____________________________________________________")
-        print("Summary...")
-        print(f"period: {df.iloc[0,-1]} - {df.iloc[df.shape[0]-2,-1]}")
+        #print(f"period: {df.iloc[0,-1]} - {df.iloc[df.shape[0]-2,-1]}")
         print("\nFormations: ", int(df.shape[0]/self.window_size))
         print("Entry Candle: ", self.entry_candle)
         print("\nTotal Trades: ", trade_counter)
@@ -662,6 +660,6 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
             print(f'Entry candle: {self.entry_candle}')
             print("Budget: ", self.budget)
             print("Entry price: ", round(entry, 2))
-            print("Prediction: ", round(ppred, 2))
-            print("Expected Market move: ", round(ppred - entry, 2))
+            print("\nPrediction: ", round(ppred, 2))
+            print("\nExpected Market move: ", round(ppred - entry, 2))
             print("Expected Profit: ", round(profit_pen, 2))

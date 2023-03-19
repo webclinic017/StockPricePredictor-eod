@@ -25,8 +25,8 @@ window_size = int(variables_dict['window_size'])
 sentiment_type = str(variables_dict['sentiment_type'])
 ticker = variables_dict['ticker']
 entry_candle = str(variables_dict['entry_candle'])
-model_name = str(variables_dict['model_name'])
-model_name = f'./files/{model_name}'
+model_name_ = str(variables_dict['model_name'])
+model_name = f'./files/{model_name_}'
 indicator1 = int(variables_dict['indicator1'])
 indicator2 = int(variables_dict['indicator2'])
 indicator3 = int(variables_dict['indicator3'])
@@ -35,12 +35,16 @@ period = str(variables_dict['period'])
 formation_window = int(variables_dict['formation_window'])
 acceptance = float(variables_dict['acceptance'])
 penalization = float(variables_dict['penalization'])
-start_date = variables_dict['start_date']
-parsed_date = datetime.strptime(start_date, "%d/%m/%Y")
+
+start_date = str(variables_dict['start_date'])
+print("debug start_date: ",start_date)
+parsed_date = datetime.strptime(start_date, "%Y-%m-%d")
 start_date = parsed_date.strftime("%Y-%m-%d")
-end_date = variables_dict['end_date']   
-parsed_date = datetime.strptime(end_date, "%d/%m/%Y")
+
+end_date = str(variables_dict['end_date'])   
+parsed_date = datetime.strptime(end_date, "%Y-%m-%d")
 end_date = parsed_date.strftime("%Y-%m-%d")
+
 api_key = str(variables_dict['api_key'])  
 target_window = int(variables_dict['target_window'])
 split_ratio = float(variables_dict['split_ratio'])
@@ -60,7 +64,34 @@ sentiment = bool(variables_dict['sentiment'])
 condition = bool(variables_dict['condition'])
 excel_reports = bool(variables_dict['excel_reports'])
 twitter = bool(variables_dict['twitter'])
-   
+
+
+current_date = date.today()
+current_date = current_date.strftime('%Y-%m-%d')
+
+# Assuming the date is stored as a string
+date_string = current_date
+
+# Convert the date string to a datetime object
+date_object = datetime.strptime(date_string, '%Y-%m-%d')
+moveBack = 0
+
+while moveBack < 6:
+    
+    # Subtract two days from the datetime object
+    new_date_object = date_object - timedelta(days=moveBack)
+
+    day = new_date_object.strftime('%A')
+    #print(day)
+    
+    if (day == 'Sunday') or (day == 'Saturday'):
+        revised_date = new_date_object - timedelta(days=7)    
+        revised_end_date = revised_date.strftime('%Y-%m-%d') 
+        
+        break
+    else:
+        moveBack+=1
+
 
 def GetData():
     from training_docker import SplitData
@@ -69,7 +100,7 @@ def GetData():
 
         GetNewsAPI = GetNews()
 
-        GetNewsAPI.fit(ticker=ticker, start_date=start_date, end_date=end_date,
+        GetNewsAPI.fit(ticker=ticker, start_date=start_date, end_date=revised_end_date,
                     n_news=1000, token=api_key, offset=0, export_excel=False, twitter=twitter,temp_folder=False)
         news_df = GetNewsAPI.transform()
 
@@ -79,7 +110,7 @@ def GetData():
 
     GetData.fit(ticker=ticker,
                 start_date=start_date,
-                end_date=end_date,
+                end_date=revised_end_date,
                 interval=period,  # 1wk
                 progress=False,
                 condition=condition,
@@ -137,8 +168,14 @@ GetModelPerformance.fit(acceptance=acceptance,
                             excel_path=excel_reports,
                             sentiment=sentiment)
 
+print("\n____________________________________________________")
+print("Summary...")
 if shuffle == True:
-    print("Shuffle is True, date period will not be correct")
+    print(f"Test set is sampled as {test_ratio*100}% of bellow period, data is shuffled")
+    print(f'\nPeriod: {start_date} - {revised_end_date}') #initial end_date {end_date}
+else:
+    print(f"Test set is sampled as {test_ratio*100}% of bellow period")
+    print(f'\nPeriod: {start_date} - {end_date}')
 
 trades_df = GetModelPerformance.transform(performance_df)
 
@@ -172,7 +209,7 @@ fit_output = MakeSinglePrediction.fit(
     model_name=model_name,
     form_window=formation_window,
     ticker=ticker,
-    start_date="2019-03-18",
+    start_date="2019-01-07",
     end_date=revised_date,
     interval=period,  # 1wk
     progress=False,
@@ -223,7 +260,7 @@ print("\n____________________________________________________")
 print("Make prediction...")
 print("Today's date: ", current_date)
 print(f"Predicted period: {from_date} - {to_date}")
-
+print("Model name:", model_name_)
 # Make prediction
 MakeSinglePrediction.transform(df)
 
