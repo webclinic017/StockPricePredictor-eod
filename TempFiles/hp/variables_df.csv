@@ -1,7 +1,7 @@
 ,0
-model_name,tsla_model_2023-03-21_6317.h5
+model_name,hp_model_2023-03-21_2886.h5
 Date,2023-03-21
-ticker,tsla
+ticker,hp
 period,1wk
 api_key,631505e804ec58.42743136
 sentiment,True
@@ -18,7 +18,7 @@ indicator2,8
 indicator3,21
 window_size,5
 twitter,True
-start_date,2018-12-31
+start_date,2020-01-01
 end_date,2023-03-12
 batch_size_train,6
 batch_size_valid,2
@@ -26,4 +26,4 @@ shuffle,True
 entry_candle,Current Open
 excel_reports,.\Excel reports
 acceptance,0
-penalization,1
+penalization,0
