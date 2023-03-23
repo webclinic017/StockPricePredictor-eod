@@ -1,6 +1,6 @@
 ,0
-model_name,tsla_model_2023-03-21_6317.h5
-Date,2023-03-21
+model_name,tsla_model_2023-03-23_3566.h5
+Date,2023-03-23
 ticker,tsla
 period,1wk
 api_key,631505e804ec58.42743136
@@ -18,12 +18,12 @@ indicator2,8
 indicator3,21
 window_size,5
 twitter,True
-start_date,2018-12-31
-end_date,2023-03-12
+start_date,2019-12-30
+end_date,2023-03-18
 batch_size_train,6
 batch_size_valid,2
 shuffle,True
 entry_candle,Current Open
 excel_reports,.\Excel reports
 acceptance,0
-penalization,1
+penalization,0

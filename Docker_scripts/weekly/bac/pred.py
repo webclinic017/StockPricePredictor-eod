@@ -101,7 +101,7 @@ if __name__ == "__main__":
         time.sleep(1)
 
         GetData = PullData()
-
+        
         GetData.fit(ticker=ticker,
                     start_date=start_date,
                     end_date=revised_end_date,
@@ -136,8 +136,11 @@ if __name__ == "__main__":
             date_obj = row['Date'].date()
             
             if not is_monday(date_obj):
-                raise Exception(f"Error: Data were not properly pulled, start date is NOT Monday. ")
-    
+                print(df.head(10))
+                raise Exception(f"Error: {date_obj} is NOT Monday, data were not properly pulled ")
+            # else:
+            #     print(df.head(4))
+        
         time.sleep(1)
 
         from transformers_preprocess_docker import NormalizeData
@@ -262,6 +265,19 @@ if __name__ == "__main__":
 
     print("\nPrint Data...")
     print(df)
+
+    # Function to check if date is Monday
+    df_temp = df[df['Date']!= "Month"].copy()
+    def is_monday(date):
+            return date.weekday() == 0
+        # Loop through first 5 rows and check if the date is Monday
+    for index, row in df_temp.head(3).iterrows():
+        date_obj = row['Date'].date()
+            
+        if not is_monday(date_obj):
+            #print(df.head(3))
+            raise Exception(f"Error: {date_obj} is NOT Monday, data were not properly pulled.")
+        
     print("\n____________________________________________________")
     print("Make prediction...")
     print("\nToday's date: ", current_date)
