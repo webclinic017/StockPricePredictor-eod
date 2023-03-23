@@ -315,16 +315,18 @@ class GetModelPerformance(BaseEstimator, TransformerMixin):
         print("\nTotal Trades: ", trade_counter)
         print("Profit Trades: ", profit_trades)
         print("Loss Trades: ", loss_trades)
-        print("\nWin Ratio: {} %".format(
-            round(profit_trades/trade_counter, 2)*100))
-        print("Loss Ratio: {} %".format(
-            round(((-profit_trades/trade_counter)+1)*100), 2))
+        if trade_counter != 0:
+            print("\nWin Ratio: {} %".format(
+                round(profit_trades/trade_counter, 2)*100))
+            print("Loss Ratio: {} %".format(
+                round(((-profit_trades/trade_counter)+1)*100), 2))
 
         print("\nReal Win Trades: ", TP_counter)
-        print(
-            f"Real Win Trades (%): {round(100*(TP_counter/trade_counter),2)}")
+        if trade_counter != 0:
+            print(
+                f"Real Win Trades (%): {round(100*(TP_counter/trade_counter),2)}")
+            print("\nAverage profit per trade: ", round(ttl_profit/trade_counter))
 
-        print("\nAverage profit per trade: ", round(ttl_profit/trade_counter))
         print("\nGross profit: ", ttl_profit)
         print("Gross loss: ", ttl_loss)
         print("Net profit: ", ttl_profit+ttl_loss)
@@ -652,7 +654,7 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
 
         ppred = round(pred-self.penalization, 5)
         if (ppred - entry) < self.acceptance:
-            print("Acceptance was not meet, do not trade.")
+            print("\nAcceptance was not meet, do not trade.")
         else:
             profit_pen = self.Profit_calculation(self.budget, entry, ppred)
             print("\n")

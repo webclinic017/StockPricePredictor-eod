@@ -126,6 +126,19 @@ if __name__ == "__main__":
         data_prep = GetData.transform()
 
         time.sleep(1)
+        
+        # Function to check if date is Monday
+        df = data_prep[data_prep['Date']!= "Month"]
+        def is_monday(date):
+            return date.weekday() == 0
+        # Loop through first 5 rows and check if the date is Monday
+        for index, row in df.head(10).iterrows():
+            date_obj = row['Date'].date()
+            
+            if not is_monday(date_obj):
+                raise Exception(f"Error: Data were not properly pulled, start date is NOT Monday. ")
+    
+        time.sleep(1)
 
         from transformers_preprocess_docker import NormalizeData
 
@@ -166,11 +179,13 @@ if __name__ == "__main__":
     print("Summary...")
     if shuffle == True:
         print(f"Test set is sampled as {test_ratio*100}% of bellow period, data is shuffled")
-        print(f'\nPeriod: {start_date} - {revised_end_date}') #initial end_date {end_date}
+        print(f'\nTotal Timeframe: {start_date} - {revised_end_date}') #initial end_date {end_date}
     else:
         print(f"Test set is sampled as {test_ratio*100}% of bellow period")
-        print(f'\nPeriod: {start_date} - {end_date}')
+        print(f'\nTotal Timeframe: {start_date} - {end_date}')
 
+    print(f"Data splitted as train: {split_ratio*100}%, validation: {validation_ratio*100}%, test: {test_ratio*100}%")
+    print("Period: ",period)
     trades_df = GetModelPerformance.transform(performance_df)
 
     MakeSinglePrediction = MakeSinglePrediction()
@@ -229,7 +244,6 @@ if __name__ == "__main__":
             date2 = date.to_pydatetime()
             day = date2.strftime('%A')
 
-            print(day)
             if day == "Monday":
                 revised_df = df.iloc[1:, :]
                 break
@@ -250,7 +264,7 @@ if __name__ == "__main__":
     print(df)
     print("\n____________________________________________________")
     print("Make prediction...")
-    print("Today's date: ", current_date)
+    print("\nToday's date: ", current_date)
     print(f"Predicted period: {from_date} - {to_date}")
     print("Model name:", model_name_)
     # Make prediction

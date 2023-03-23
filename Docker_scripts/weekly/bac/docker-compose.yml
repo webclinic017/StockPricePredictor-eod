@@ -1,11 +1,11 @@
 version: '3'
 services:
-  BACpredictions: # name of project
+  TSLApredictions: # name of project
     build:
       context: .                  #from where project files are taken and loaded
       dockerfile: Dockerfile.dev
-    image: bac_prediction
-    container_name: bac
+    image: tesla_prediction
+    container_name: tsla
     ports:
       - '4000:80'
     volumes:
