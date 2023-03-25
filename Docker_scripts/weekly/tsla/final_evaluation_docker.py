@@ -654,7 +654,8 @@ class MakeSinglePrediction(BaseEstimator, TransformerMixin):
 
         ppred = round(pred-self.penalization, 5)
         if (ppred - entry) < self.acceptance:
-            print("\nAcceptance was not meet, do not trade.")
+            print("\nPrediction is not profitable.")
+            print(f"Prediction is {ppred}")
         else:
             profit_pen = self.Profit_calculation(self.budget, entry, ppred)
             print("\n")

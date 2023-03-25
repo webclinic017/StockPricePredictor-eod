@@ -126,7 +126,9 @@ if __name__ == "__main__":
         data_prep = GetData.transform()
 
         time.sleep(1)
-        
+        print("Window for check, each date should be Monday: \n")
+        print(data_prep.head(window_size))
+        print("\n")
         # Function to check if date is Monday
         df = data_prep[data_prep['Date']!= "Month"]
         def is_monday(date):

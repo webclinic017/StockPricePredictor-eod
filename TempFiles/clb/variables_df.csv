@@ -1,7 +1,7 @@
 ,0
-model_name,bac_model_2023-03-25_5775.h5
+model_name,clb_model_2023-03-25_8631.h5
 Date,2023-03-25
-ticker,bac
+ticker,clb
 period,1wk
 api_key,631505e804ec58.42743136
 sentiment,True
@@ -26,5 +26,5 @@ shuffle,True
 entry_candle,Current Open
 excel_reports,.\Excel reports
 acceptance,0
-penalization,0.7
+penalization,1
 learning_rate,0.007

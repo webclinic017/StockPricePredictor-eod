@@ -1,7 +1,7 @@
 ,0
-model_name,tsla_model_2023-03-23_3566.h5
-Date,2023-03-23
-ticker,tsla
+model_name,TSLA_model_2023-03-25_3825.h5
+Date,2023-03-25
+ticker,TSLA
 period,1wk
 api_key,631505e804ec58.42743136
 sentiment,True
@@ -26,4 +26,5 @@ shuffle,True
 entry_candle,Current Open
 excel_reports,.\Excel reports
 acceptance,0
-penalization,0
+penalization,0.8
+learning_rate,0.007
