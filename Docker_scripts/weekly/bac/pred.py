@@ -145,6 +145,31 @@ if __name__ == "__main__":
         
         time.sleep(1)
 
+        #new code__________________________________________________________
+        if shuffle == True:
+            df_ = data_prep.copy()
+            ttl_windows = len(df_)/window_size
+            testsubset = round(ttl_windows*test_ratio, 0)
+
+            xtest_split = testsubset * window_size
+            test_split = int(xtest_split)
+
+            print("DF Shape: ", df_.shape)
+            print("test_split split: ", test_split)
+            
+            x_test_new = df_.tail(test_split)
+
+            from transformers_preprocess import NormalizeData
+
+            NormalizeData = NormalizeData()
+
+            NormalizeData.fit(window_size=window_size, shuffle=False, debug=False,
+                            export_excel=False, excel_path=excel_reports, sentiment=sentiment)
+
+            unshuffled_test, Dates_unshuffled_test = NormalizeData.transform(x_test_new)
+
+        #_____________________________________________________________________________________
+
         from transformers_preprocess_docker import NormalizeData
 
         NormalizeData = NormalizeData()
@@ -162,7 +187,20 @@ if __name__ == "__main__":
                     dates=Dates, debug=False, export_excel=False, excel_path=excel_reports, sentiment=sentiment,validation_set=validation_ratio, test_set=test_ratio)
 
         _, _, x_test, _, _, x_test_x, _ = SplitData.transform(data_normalized)
+       
+       #NEW CODE__________________________________________________________
+        if shuffle==True:
+            unshuffled_test_extremes = unshuffled_test.iloc[:,-2:]
+            unshuffled_test_df = unshuffled_test.iloc[:,:-2]
+            assert unshuffled_test_extremes.shape[0] == x_test_x.shape[0]
+            assert unshuffled_test_extremes.shape[1] == x_test_x.shape[1]
+            assert unshuffled_test_df.shape[1] == x_test.shape[1]
+            assert unshuffled_test_df.shape[0] == x_test.shape[0]
 
+            x_test = unshuffled_test_df.copy()
+            x_test_x = unshuffled_test_extremes.copy()
+            Dates = Dates_unshuffled_test.copy()
+        #__________________________________________________________
         return x_test, x_test_x, Dates, news_df
 
     x_test, x_test_x, Dates, news_df = GetData()
