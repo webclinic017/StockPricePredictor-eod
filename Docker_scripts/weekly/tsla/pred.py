@@ -126,6 +126,8 @@ if __name__ == "__main__":
         data_prep = GetData.transform()
 
         time.sleep(1)
+
+        #Monday Validation_________________________________________________________
         print("Window for check, each date should be Monday: \n")
         print(data_prep.head(window_size))
         print("\n")
@@ -145,6 +147,31 @@ if __name__ == "__main__":
         
         time.sleep(1)
 
+        #new code__________________________________________________________
+        if shuffle == True:
+            df_ = data_prep.copy()
+            ttl_windows = len(df_)/window_size
+            testsubset = round(ttl_windows*test_ratio, 0)
+
+            xtest_split = testsubset * window_size
+            test_split = int(xtest_split)
+
+            print("DF Shape: ", df_.shape)
+            print("test_split split: ", test_split)
+            
+            x_test_new = df_[-test_split:]
+
+            from transformers_preprocess_docker import NormalizeData
+
+            NormalizeData = NormalizeData()
+
+            NormalizeData.fit(window_size=window_size, shuffle=False, debug=False,
+                            export_excel=False, excel_path=excel_reports, sentiment=sentiment)
+
+            unshuffled_test, Dates_unshuffled_test = NormalizeData.transform(x_test_new)
+
+        #_____________________________________________________________________________________
+
         from transformers_preprocess_docker import NormalizeData
 
         NormalizeData = NormalizeData()
@@ -159,10 +186,22 @@ if __name__ == "__main__":
         SplitData = SplitData()
 
         SplitData.fit(split_ratio=split_ratio, window_size=window_size,
-                    dates=Dates, debug=False, export_excel=False, excel_path=excel_reports, sentiment=sentiment,validation_set=validation_ratio, test_set=test_ratio)
+                    dates=Dates, debug=False, export_excel=False, 
+                    excel_path=excel_reports, sentiment=sentiment,
+                    validation_set=validation_ratio, test_set=test_ratio,
+                    shuffle=shuffle)
 
         _, _, x_test, _, _, x_test_x, _ = SplitData.transform(data_normalized)
+       
+       #NEW CODE__________________________________________________________
+        if shuffle==True:
+            unshuffled_test_extremes = unshuffled_test.iloc[:,-2:]
+            unshuffled_test_df = unshuffled_test.iloc[:,:-2]
 
+            x_test = unshuffled_test_df.copy()
+            x_test_x = unshuffled_test_extremes.copy()
+            Dates = Dates_unshuffled_test.copy()
+        #__________________________________________________________
         return x_test, x_test_x, Dates, news_df
 
     x_test, x_test_x, Dates, news_df = GetData()
@@ -190,9 +229,11 @@ if __name__ == "__main__":
         print(f'\nTotal Timeframe: {start_date} - {end_date}')
 
     print(f"Data splitted as train: {split_ratio*100}%, validation: {validation_ratio*100}%, test: {test_ratio*100}%")
+
+    print(f"Tested period: {performance_df['Datetime'].min()} - {performance_df['Datetime'].max()}")
     print("Period: ",period)
     trades_df = GetModelPerformance.transform(performance_df)
-
+    
     MakeSinglePrediction = MakeSinglePrediction()
 
     current_date = date.today()
@@ -261,7 +302,7 @@ if __name__ == "__main__":
     df = GetDay(trade_formation)
 
     from_date = df.iloc[-1,0] + timedelta(7)
-    to_date = from_date + timedelta(5)
+    to_date = from_date + timedelta(4)
     from_date = from_date.strftime('%Y-%m-%d')
     to_date = to_date.strftime('%Y-%m-%d')
 
@@ -285,6 +326,7 @@ if __name__ == "__main__":
     print("\nToday's date: ", current_date)
     print(f"Predicted period: {from_date} - {to_date}")
     print("Model name:", model_name_)
+    print("Penalisation:", penalization)
     # Make prediction
     MakeSinglePrediction.transform(df)
 

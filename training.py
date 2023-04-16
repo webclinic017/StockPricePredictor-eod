@@ -24,7 +24,9 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.test_set = None
         self.validation_set = None
 
-    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool, export_excel: bool, excel_path: str, sentiment: bool, validation_set: float, test_set: float):
+    def fit(self, split_ratio: float, window_size: int, dates: List, debug: bool, 
+            export_excel: bool, excel_path: str, sentiment: bool, 
+            validation_set: float, test_set: float, shuffle:bool):
         """
         """
 
@@ -37,6 +39,7 @@ class SplitData(BaseEstimator, TransformerMixin):
         self.sentiment = sentiment
         self.validation_set = validation_set
         self.test_set = test_set
+        self.shuffle = shuffle
         return self
 
     def transform(self, df):
@@ -52,87 +55,136 @@ class SplitData(BaseEstimator, TransformerMixin):
         if self.split_ratio + self.validation_set + self.test_set != 1:
             raise Exception("Error with ratio splits.")
 
+ 
         # Make Calculations
         ttl_windows = len(df_)/self.window_size
+
         trainsubset = round(ttl_windows*self.split_ratio, 0)
-        ttl_xval = + ttl_windows-trainsubset
-        # get number for splitting
         xtrain_split = trainsubset * self.window_size
-        # New Code Test Set
+        
+        testsubset = round(ttl_windows*self.test_set, 0)
+        test_split = testsubset * self.window_size
+        
         valsubset = round(ttl_windows * self.validation_set, 0)
         val_split = valsubset * self.window_size
 
-        if self.debug == True:
-            print("Dataframe shape:  ", df.shape)
-            print("total windows in dataset: ", ttl_windows)
-            print("\ntotal windows of {0}% train set: {1} ".format(
-                self.split_ratio*100, trainsubset))
-            print("total windows of {0}% valid set: {1} ".format(
-                round((1 - self.split_ratio)*100), ttl_xval))
+        ttl_xval = + ttl_windows-trainsubset
+        # get number for splitting
+
+        # if self.debug == True:
+        #     print("Dataframe shape:  ", df.shape)
+        #     print("total windows in dataset: ", ttl_windows)
+        #     print("\ntotal windows of {0}% train set: {1} ".format(
+        #         self.split_ratio*100, trainsubset))
+        #     print("total windows of {0}% valid set: {1} ".format(
+        #         round((1 - self.split_ratio)*100), ttl_xval))
 
         # Do a split
         train_split = int(xtrain_split)
         val_split = int(val_split)
+        test_split = int(test_split)
+
         print("DF Shape: ", df_.shape)
         print("train_split split: ", train_split)
         print("validation split: ", val_split)
-        print("total validation windows: ", ttl_xval)
-        # train split
-        time_train = self.dates[:train_split]
-        x_train = df_[:train_split]
-        # validation split
-        time_valid = self.dates[train_split:train_split + val_split]
-        x_valid = df_[train_split:train_split + val_split]
-        # test split
-        time_test = self.dates[train_split+val_split:]
-        x_test = df_[train_split + val_split:]
 
-        # Format dates
-        start_date_train = time_train.values[0]
-        start_date_train = start_date_train.strftime('%Y-%m-%d')
-        end_date_train = time_train.values[len(time_train)-2]
-        end_date_train = end_date_train.strftime('%Y-%m-%d')
-        # Format valid
-        start_date_valid = time_valid.values[0]
-        start_date_valid = start_date_valid.strftime('%Y-%m-%d')
-        end_date_valid = time_valid.values[len(time_valid)-2]
-        end_date_valid = end_date_valid.strftime('%Y-%m-%d')
-        # Format test
-        start_date_test = time_test.values[0]
-        start_date_test = start_date_test.strftime('%Y-%m-%d')
-        end_date_test = time_test.values[len(time_test)-2]
-        end_date_test = end_date_test.strftime('%Y-%m-%d')
+        if self.shuffle==False:
+            print("test split: ", val_split)
+
+        #print("total validation windows: ", ttl_xval)
+
+        if self.shuffle==True:
+            #remove test set from dataframe, so that test set is not included in training
+            time_total = self.dates[:-test_split].copy()
+            df_total = df_[:-test_split].copy()
+            #validation split
+            time_valid = time_total[-val_split:]
+            x_valid = df_total[-val_split:]
+            # train split
+            time_train = self.dates[:-val_split]
+            x_train = df_total[:-val_split]
+            # Format dates
+            start_date_train = time_train.values[0]
+            start_date_train = start_date_train.strftime('%Y-%m-%d')
+            end_date_train = time_train.values[len(time_train)-2]
+            end_date_train = end_date_train.strftime('%Y-%m-%d')
+            # Format valid
+            start_date_valid = time_valid.values[0]
+            start_date_valid = start_date_valid.strftime('%Y-%m-%d')
+            end_date_valid = time_valid.values[len(time_valid)-2]
+            end_date_valid = end_date_valid.strftime('%Y-%m-%d')
+        else:
+            # test split
+            time_test = self.dates[-test_split:]
+            x_test = df_[-test_split:]
+            #validation split
+            time_valid = self.dates[-test_split-val_split:-test_split]
+            x_valid = df_[-test_split-val_split:-test_split]
+            # train split
+            time_train = self.dates[:-test_split-val_split]
+            x_train = df_[:-test_split-val_split]
+            # Format dates
+            start_date_train = time_train.values[0]
+            start_date_train = start_date_train.strftime('%Y-%m-%d')
+            end_date_train = time_train.values[len(time_train)-2]
+            end_date_train = end_date_train.strftime('%Y-%m-%d')
+            # Format valid
+            start_date_valid = time_valid.values[0]
+            start_date_valid = start_date_valid.strftime('%Y-%m-%d')
+            end_date_valid = time_valid.values[len(time_valid)-2]
+            end_date_valid = end_date_valid.strftime('%Y-%m-%d')
+            # Format test
+            start_date_test = time_test.values[0]
+            start_date_test = start_date_test.strftime('%Y-%m-%d')
+            end_date_test = time_test.values[len(time_test)-2]
+            end_date_test = end_date_test.strftime('%Y-%m-%d')
 
         # Print stuffs
         print(f"\nSplit train ratio: {round(self.split_ratio*100)} %")
         print(f"Split validation ratio: {round(self.validation_set*100)} %")
-        print(f"Split test ratio: {round(self.test_set*100)} %")
+
+        if self.shuffle==False:
+            print(f"Split test ratio: {round(self.test_set*100)} %")
         print(
             f"\ntrain period: {start_date_train} - {end_date_train}")
         print(
             f"valid period: {start_date_valid} - {end_date_valid}")
-        print(
-            f"test period: {start_date_test} - {end_date_test}")
+        if self.shuffle==False:
+            print(
+                f"test period: {start_date_test} - {end_date_test}")
+        if self.shuffle==True:
+            print("\nTotal Windows (no test set): ",len(df_total)/self.window_size )
+        else:
+            print("\nTotal Windows: ", ttl_windows)
 
-        print("\nTotal Windows: ", ttl_windows)
         print("x_train windows: ", len(x_train)/self.window_size)
         print("x_valid windows: ", len(x_valid)/self.window_size)
-        print("x_test windows: ", len(x_test)/self.window_size)
+
+        if self.shuffle==False:
+            print("x_test windows: ", len(x_test)/self.window_size)
 
         # Save extreme values
         x_train_extremes = x_train.iloc[:, 7+mover:].copy()
         x_valid_extremes = x_valid.iloc[:, 7+mover:].copy()
-        x_test_extremes = x_test.iloc[:, 7+mover:].copy()
 
         # Remove extreme values
         x_valid = x_valid.iloc[:, :7+mover].copy()
         x_train = x_train.iloc[:, :7+mover].copy()
-        x_test = x_test.iloc[:, :7+mover].copy()
+
+        if self.shuffle==False:
+            x_test_extremes = x_test.iloc[:, 7+mover:].copy()
+            x_test = x_test.iloc[:, :7+mover].copy()
+        else:
+            x_test_extremes = None
+            x_test = None
+            time_test = None
 
         if self.export_excel == True:
             x_valid.to_excel(f'{self.excel_path}/x_valid_dataset.xlsx')
             x_train.to_excel(f'{self.excel_path}/x_train_dataset.xlsx')
-            x_test.to_excel(f'{self.excel_path}/x_test_dataset.xlsx')
+            #x_test.to_excel(f'{self.excel_path}/x_test_dataset.xlsx')
+
+        
         print("--------> SplitData completed\n")
         return x_train, x_valid, x_test, x_train_extremes, x_valid_extremes, x_test_extremes, time_test
 

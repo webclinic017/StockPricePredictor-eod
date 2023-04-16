@@ -251,15 +251,14 @@ class PullData(BaseEstimator, TransformerMixin):
                  'condition4': condition4,
                  'condition5': condition5,
                  'condition6': condition6}
-        # if self.condition == True:
-        #     for item in self.listed_conditions:
+
         previous_high = final_df_w.iloc[row-1, 2]
 
         for row in range(self.form_window, len(final_df_w)):
 
             if final_df_w.iloc[row, 0] == "Month":
 
-                if (self.condition == True and eval(condition4)):  # eval(condition4)
+                if (self.condition == True and eval(condition4)):  
 
                     temp_df = pd.DataFrame()
 

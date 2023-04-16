@@ -4,7 +4,7 @@ services:
     build:
       context: .                  #from where project files are taken and loaded
       dockerfile: Dockerfile.dev
-    image: tesla_prediction
+    image: tsla_prediction_final
     container_name: tsla
     ports:
       - '4000:80'
