@@ -1,6 +1,6 @@
 ,0
-model_name,tsla_model_2023-04-15_4818.h5
-Date,2023-04-15
+model_name,tsla_model_2023-04-24_6331.h5
+Date,2023-04-24
 ticker,tsla
 period,1wk
 api_key,631505e804ec58.42743136
@@ -27,4 +27,5 @@ entry_candle,Current Open
 excel_reports,.\Excel reports
 acceptance,0
 penalization,0
-learning_rate,0.0007
+learning_rate,7e-05
+test_set_start,143

@@ -1,10 +1,10 @@
 version: '3'
 services:
-  TSLApredictions: # name of project
+  tsla_prediction_v2: # name of project
     build:
       context: .                  #from where project files are taken and loaded
       dockerfile: Dockerfile.dev
-    image: tsla_prediction_final
+    image: tsla_prediction_v2
     container_name: tsla
     ports:
       - '4000:80'
