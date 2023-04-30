@@ -84,7 +84,7 @@ class SplitData(BaseEstimator, TransformerMixin):
         val_split = int(val_split)
         test_split = int(test_split)
 
-        print("DF Shape: ", df_.shape)
+        print("Data_prep Shape: ", df_.shape)
         print("train_split split: ", train_split)
         print("validation split: ", val_split)
 
@@ -93,27 +93,44 @@ class SplitData(BaseEstimator, TransformerMixin):
 
         #print("total validation windows: ", ttl_xval)
 
+        # xtest_split = testsubset * window_size
+        # test_split = int(xtest_split)
+
+        # print("DF Shape: ", df_.shape)
+        # print("test_split split: ", test_split)
+        # print("Shuffle is: ",shuffle)
+    
+        #x_test_new = df_[-test_split:]
+
         if self.shuffle==True:
-            #remove test set from dataframe, so that test set is not included in training
-            time_total = self.dates[:-test_split].copy()
-            df_total = df_[:-test_split].copy()
-            #validation split
+            
+            time_total = self.dates.copy()
+            df_total = df_.copy()
+
+            #SLICE and get Validation Set
             time_valid = time_total[-val_split:]
             x_valid = df_total[-val_split:]
+            # print("time_valid: ",time_valid.shape)
+            # print("x_valid ",x_valid.shape)
             # train split
-            time_train = self.dates[:-val_split]
+            time_train = time_total[:-val_split]
+            # print("time train shape: ",time_train.shape)
             x_train = df_total[:-val_split]
+            # print("x_train shape: ",time_train.shape)
             # Format dates
             start_date_train = time_train.values[0]
             start_date_train = start_date_train.strftime('%Y-%m-%d')
+
             end_date_train = time_train.values[len(time_train)-2]
             end_date_train = end_date_train.strftime('%Y-%m-%d')
+       
             # Format valid
             start_date_valid = time_valid.values[0]
             start_date_valid = start_date_valid.strftime('%Y-%m-%d')
             end_date_valid = time_valid.values[len(time_valid)-2]
             end_date_valid = end_date_valid.strftime('%Y-%m-%d')
         else:
+            # shuffle is FALSE
             # test split
             time_test = self.dates[-test_split:]
             x_test = df_[-test_split:]
@@ -126,8 +143,10 @@ class SplitData(BaseEstimator, TransformerMixin):
             # Format dates
             start_date_train = time_train.values[0]
             start_date_train = start_date_train.strftime('%Y-%m-%d')
+
             end_date_train = time_train.values[len(time_train)-2]
             end_date_train = end_date_train.strftime('%Y-%m-%d')
+
             # Format valid
             start_date_valid = time_valid.values[0]
             start_date_valid = start_date_valid.strftime('%Y-%m-%d')
@@ -145,10 +164,10 @@ class SplitData(BaseEstimator, TransformerMixin):
 
         if self.shuffle==False:
             print(f"Split test ratio: {round(self.test_set*100)} %")
-        print(
-            f"\ntrain period: {start_date_train} - {end_date_train}")
-        print(
-            f"valid period: {start_date_valid} - {end_date_valid}")
+            print(
+                f"\ntrain period: {start_date_train} - {end_date_train}")
+            print(
+                f"valid period: {start_date_valid} - {end_date_valid}")
         if self.shuffle==False:
             print(
                 f"test period: {start_date_test} - {end_date_test}")
@@ -184,7 +203,6 @@ class SplitData(BaseEstimator, TransformerMixin):
             x_train.to_excel(f'{self.excel_path}/x_train_dataset.xlsx')
             #x_test.to_excel(f'{self.excel_path}/x_test_dataset.xlsx')
 
-        
         print("--------> SplitData completed\n")
         return x_train, x_valid, x_test, x_train_extremes, x_valid_extremes, x_test_extremes, time_test
 

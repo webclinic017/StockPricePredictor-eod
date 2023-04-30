@@ -84,7 +84,7 @@ if __name__ == "__main__":
         #print(day)
         
         if (day == 'Sunday') or (day == 'Saturday'):
-            revised_date = new_date_object - timedelta(days=7)    
+            revised_date = new_date_object - timedelta(days=0)    
             revised_end_date = revised_date.strftime('%Y-%m-%d') 
             
             break
@@ -93,7 +93,6 @@ if __name__ == "__main__":
     print("Revised End Date: ", revised_end_date)
 
     def GetData():
-        from training_docker import SplitData
 
         if sentiment == True:
             GetNewsAPI = GetNews()
@@ -113,9 +112,9 @@ if __name__ == "__main__":
                     condition=condition,
                     form_window=formation_window,
                     target_window=target_window,
-                    timeperiod1=indicator1,#6
-                    timeperiod2=indicator2,#12
-                    timeperiod3=indicator3,#24
+                    timeperiod1=indicator1,#
+                    timeperiod2=indicator2,#
+                    timeperiod3=indicator3,#
                     export_excel=False,
                     excel_path=excel_reports,
                     listed_conditions=None,
@@ -129,7 +128,12 @@ if __name__ == "__main__":
         data_prep = GetData.transform()
 
         time.sleep(1)
+        #IMPORTANT!!!!!!!!!!!!!!!!!!!!!!!!
 
+        #When getting data via yahoo finance API, with current date, there is distorted last formation, 
+        # when pulling weekly data, as target, it takes Friday's candle and distorts test set
+        #therefore we must remove last window.
+        data_prep = data_prep[:-window_size]
         #Monday Validation_________________________________________________________
         print("Window for check, each date should be Monday: \n")
         print("Data_prep_head____")
@@ -137,10 +141,12 @@ if __name__ == "__main__":
         print("\n")
         print("Data_prep_tail____")
         print(data_prep.tail(window_size))
+
         # Function to check if date is Monday
         df = data_prep[data_prep['Date']!= "Month"]
         def is_monday(date):
             return date.weekday() == 0
+        
         # Loop through first 5 rows and check if the date is Monday
         for index, row in df.head(10).iterrows():
             date_obj = row['Date'].date()
@@ -148,9 +154,7 @@ if __name__ == "__main__":
             if not is_monday(date_obj):
                 print(df.head(10))
                 raise Exception(f"Error: {date_obj} is NOT Monday, data were not properly pulled ")
-            # else:
-            #     print(df.head(4))
-        
+
         time.sleep(1)
 
         #new code__________________________________________________________
@@ -198,16 +202,21 @@ if __name__ == "__main__":
 
     print("\n____________________________________________________")
     print("Summary...")
+
+    mdate = (performance_df['Datetime'].max() - timedelta(days=1)) + timedelta(days=6)
+
+    #revised_end_date = (revised_end_date.strftime('%Y-%m-%d')  - timedelta(days=1)) + timedelta(days=6)
     if shuffle == True:
         print(f"Test set is sampled as {test_ratio*100}% of bellow period, data is shuffled")
-        print(f'\nTotal Timeframe: {start_date} - {revised_end_date}') #initial end_date {end_date}
+        print(f'\nTotal Timeframe: {start_date} - {mdate}') #initial end_date {end_date}
     else:
         print(f"Test set is sampled as {test_ratio*100}% of bellow period")
-        print(f'\nTotal Timeframe: {start_date} - {revised_end_date}')
+        print(f'\nTotal Timeframe: {start_date} - {mdate}')
 
-    #print(f"Data splitted as train: {split_ratio*100}%, validation: {validation_ratio*100}%, test: {test_ratio*100}%")
 
-    print(f"Tested period: {performance_df['Datetime'].min()} - {performance_df['Datetime'].max() - timedelta(days=1)}")
+
+
+    print(f"Tested period: {performance_df['Datetime'].min()} - {mdate}")
     print("Period: ",period)
     trades_df = GetModelPerformance.transform(performance_df)
     
@@ -290,12 +299,11 @@ if __name__ == "__main__":
     df_temp = df[df['Date']!= "Month"].copy()
     def is_monday(date):
             return date.weekday() == 0
-        # Loop through first 5 rows and check if the date is Monday
+    # Loop through first 5 rows and check if the date is Monday
     for index, row in df_temp.head(3).iterrows():
         date_obj = row['Date'].date()
             
         if not is_monday(date_obj):
-            #print(df.head(3))
             raise Exception(f"Error: {date_obj} is NOT Monday, data were not properly pulled.")
         
     print("\n____________________________________________________")
