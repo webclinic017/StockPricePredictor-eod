@@ -1,10 +1,10 @@
 version: '3'
 services:
-  AAPLpredictions: # name of project
+  mrk_prediction: # name of project
     build:
       context: .                  #from where project files are taken and loaded
       dockerfile: Dockerfile.dev
-    image: merck_prediction
+    image: mrk_prediction
     container_name: mrk
     ports:
       - '4000:80'

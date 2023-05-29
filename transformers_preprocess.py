@@ -258,7 +258,7 @@ class PullData(BaseEstimator, TransformerMixin):
 
             if final_df_w.iloc[row, 0] == "Month":
 
-                if (self.condition == True and eval(condition4)):  
+                if (self.condition == True and eval(condition1)):  
 
                     temp_df = pd.DataFrame()
 
