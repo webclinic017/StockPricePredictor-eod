@@ -1,6 +1,6 @@
 version: '3'
 services:
-  AAPLpredictions: # name of project
+  hpq_prediction: # name of project
     build:
       context: .                  #from where project files are taken and loaded
       dockerfile: Dockerfile.dev
@@ -10,3 +10,5 @@ services:
       - '4000:80'
     volumes:
       - .:/app
+    environment:
+      - TZ=Europe/Paris
