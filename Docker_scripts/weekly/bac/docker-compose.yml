@@ -1,0 +1,14 @@
+version: '3'
+services:
+  bac_prediction: # name of project
+    build:
+      context: .                  #from where project files are taken and loaded
+      dockerfile: Dockerfile.dev
+    image: bac_prediction
+    container_name: bac
+    ports:
+      - '4000:80'
+    volumes:
+      - C:/Temp:/app/temp
+    environment:
+      - TZ=Europe/Paris
