@@ -1,0 +1,14 @@
+version: '3'
+services:
+  hp3w_prediction: # name of project
+    build:
+      context: .                  #from where project files are taken and loaded
+      dockerfile: Dockerfile.dev
+    image: hp3w_prediction
+    container_name: hp_3w
+    ports:
+      - '4000:80'
+    volumes:
+      - C:/Temp:/app/temp
+    environment:
+      - TZ=Europe/Paris

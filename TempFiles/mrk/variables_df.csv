@@ -1,6 +1,6 @@
 ,0
-model_name,mrk_model_2023-06-28_6084.h5
-Date,2023-06-28
+model_name,mrk_model_2023-07-15_6748.h5
+Date,2023-07-15
 ticker,mrk
 period,1wk
 api_key,631505e804ec58.42743136
@@ -15,19 +15,19 @@ validation_ratio,0.15
 condition,False
 indicator1,4
 indicator2,14
-indicator3,32
+indicator3,28
 window_size,5
 twitter,True
 start_date,2019-12-30
-end_date,2023-06-25
+end_date,2023-07-15
 batch_size_train,6
 batch_size_valid,2
 shuffle,False
 entry_candle,Current Open
 excel_reports,.\Excel reports
 gpt_json,mrk_chatgpt_news.json
-api_key_gpt,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
+api_key_gpt,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
 acceptance,0
-penalization,1
-learning_rate,0.0007
-test_set_start,150
+penalization,2
+learning_rate,7e-05
+test_set_start,154

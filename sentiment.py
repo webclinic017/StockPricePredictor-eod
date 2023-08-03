@@ -54,7 +54,7 @@ class GetNews(BaseEstimator, TransformerMixin):
             sentiment = []
             for item in news_json:
                 # extract data
-                # print(item)
+                #print(item)
                 if ((item['date'] != None) and (item['title'] != None) and (item['content'] != None) and (item['sentiment'] != None)):
 
                     date.append(item['date'])

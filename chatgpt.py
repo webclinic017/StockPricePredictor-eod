@@ -103,6 +103,8 @@ def ChatGPTAnalysis(api_key_gpt: str,titles_evaluate: list,news_df:pd.DataFrame,
     news_df_filled = news_df[news_df['ChatGPT_Sentiment'].isnull()==False].copy()
 
     # ttl_tokens_text = sum([num_tokens_from_string(text, "cl100k_base") for text in titles_evaluate]) + default_text
+    def remove_quotes(string):
+        return string.replace("'s", "s")
 
     for text in titles_evaluate:
 
@@ -110,18 +112,23 @@ def ChatGPTAnalysis(api_key_gpt: str,titles_evaluate: list,news_df:pd.DataFrame,
         
         titles.append(text)
 
-        prompt = f"My titles is followed in triple ticks as a list, do sentiment analysis between 0 to 1, do ranking in 2 digits between 0 and 1, output it as dictionary: '''{titles}'''"
+        prompt = f"My titles is followed in triple ticks as a list, \
+            do sentiment analysis between 0 to 1, do ranking in 2 digits between 0 and 1, \
+                output it as dictionary, do not output any additional text like 'Here is the sentiment analysis for the given titles:' \
+                my titles: '''{titles}'''"
         
         ttl_tokens_batch = num_tokens_from_string(prompt, "cl100k_base")
 
         if counter == len(titles_evaluate) and batch==1:
             dictionary_data = CallChatGPT(prompt)
+            dictionary_data = remove_quotes(dictionary_data)
             dictionary_data = ast.literal_eval(dictionary_data)
             main_dict.update(dictionary_data)
 
         if counter == len(titles_evaluate) and batch > 1:
             print("Last batch finished.")
             dictionary_data = CallChatGPT(prompt)
+            dictionary_data = remove_quotes(dictionary_data)
             dictionary_data = ast.literal_eval(dictionary_data)
             main_dict.update(dictionary_data)
 
@@ -129,6 +136,8 @@ def ChatGPTAnalysis(api_key_gpt: str,titles_evaluate: list,news_df:pd.DataFrame,
             print("counter: ",counter)
             print("Batch over 1000 tokens: ",ttl_tokens_batch)
             dictionary_data = CallChatGPT(prompt)
+            dictionary_data = remove_quotes(dictionary_data)
+
             dictionary_data = ast.literal_eval(dictionary_data)
             print(f"\nNumber of passed titles to chatgpt: ",len(titles))
             print(f"Number of received from chatgpt: ",len(dictionary_data))
@@ -156,7 +165,7 @@ def ChatGPTAnalysis(api_key_gpt: str,titles_evaluate: list,news_df:pd.DataFrame,
         print("Count of new json: ",len(merged_dict))
 
     #Fill sentiment analysis in news_df
-    thresh = 0.05
+    thresh = 0.15
     news_df_empties['ChatGPT_Sentiment'] = news_df_empties['Title'].map(main_dict)
     empties_count = news_df_empties['ChatGPT_Sentiment'].isnull().sum()
     ttl_count = len(news_df['ChatGPT_Sentiment'])
@@ -174,9 +183,10 @@ def ChatGPTAnalysis(api_key_gpt: str,titles_evaluate: list,news_df:pd.DataFrame,
         print(f"Total number of empty values: {empties_count}")
 
         if empties_count>0:
-            print("All empty values will be populated by 0.5")
-            news_df_empties['ChatGPT_Sentiment'].fillna(0.5, inplace=True)
-        
+            #print("All empty values will be populated by 0.5")
+            #news_df_empties['ChatGPT_Sentiment'].fillna(0.5, inplace=True)
+            print("All empty values will be dropped")
+            news_df_empties.dropna(subset=['ChatGPT_Sentiment'], inplace=True)
         #news_df_empties_ = None
         news_df = pd.concat([news_df_filled,news_df_empties],axis=0)
 
